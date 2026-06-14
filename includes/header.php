@@ -33,6 +33,9 @@
             <a href="cart.php">Košarica (<?= cartCount(); ?>)</a>
 
             <?php if (isLoggedIn()): ?>
+                <?php if (isAdmin()): ?>
+                    <a href="admin.php" class="button button-small">Admin panel</a>
+                <?php endif; ?>
                 <a href="profile.php">Moj profil</a>
                 <a href="logout.php">Odjava</a>
             <?php else: ?>

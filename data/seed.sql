@@ -261,7 +261,7 @@ VALUES
   'Robustika',
   'Univerzalna travna mješavina za sva područja sa sunčanim i sjenovitim dijelovima. Sjetva rano proljeće i jesen.',
   'Robustika je univerzalna travna mješavina za sva područja sa sunčanim i sjenovitim dijelovima. Prilagođena je različitim klimatskim uvjetima i vrstama tla. Preporučeno je sijati na temperaturi tla iznad 8°C. Optimalno je sijati u rano proljeće i jesen. Daje gustu i otpornu travnu podlogu prikladnu za rekreativne i ukrasne travnjake. Težina: 1 kg.',
-  0.00, 30, NULL, NULL, NULL, NULL, 1.00,
+  6.09, 30, NULL, NULL, NULL, NULL, 1.00,
   'https://cdn.pevex.hr/Documents/image_style/product_image/Documents/Products/17241/251229.jpg.jpg.webp?t=1774349703',
   0
 )

@@ -14,11 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($user && password_verify($password, $user['password_hash'])) {
         $_SESSION['user'] = [
-            'id' => $user['id'],
-            'name' => $user['first_name'] . ' ' . $user['last_name'],
-            'email' => $user['email'],
+            'id'       => $user['id'],
+            'name'     => $user['first_name'] . ' ' . $user['last_name'],
+            'email'    => $user['email'],
+            'is_admin' => (bool) $user['is_admin'],
         ];
-        redirect('profile.php');
+        // Admin ide na admin panel, korisnik na profil
+        redirect($user['is_admin'] ? 'admin.php' : 'profile.php');
     } else {
         $error = 'Pogrešan email ili lozinka.';
     }

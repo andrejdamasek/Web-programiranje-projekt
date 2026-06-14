@@ -17,7 +17,7 @@ $maxPrice        = $_GET['max_price']       ?? '';
 $powerType       = $_GET['power_type'] ?? '';
 
 $priceDefaults = [
-    'kosilice'    => ['min' => 200, 'max' => 740],
+    'kosilice'    => ['min' => 200, 'max' => 2510],
     'trimeri'     => ['min' => 38,  'max' => 220],
     'sjeme-trave' => ['min' => 0,   'max' => 30],
 ];
@@ -361,7 +361,7 @@ $products = $stmt->fetchAll();
     if (!catSelect) return;
 
     const priceDefaults = {
-        'kosilice':    { min: 200, max: 740 },
+        'kosilice':    { min: 200, max: 2510 },
         'trimeri':     { min: 38,  max: 220 },
         'sjeme-trave': { min: 6,   max: 30 },
         '':            { min: 0,   max: 9999 }

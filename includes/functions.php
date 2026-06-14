@@ -7,6 +7,10 @@ function isLoggedIn(): bool {
     return isset($_SESSION['user']);
 }
 
+function isAdmin(): bool {
+    return isset($_SESSION['user']['is_admin']) && $_SESSION['user']['is_admin'] === true;
+}
+
 function currentUserId(): ?int {
     return $_SESSION['user']['id'] ?? null;
 }
