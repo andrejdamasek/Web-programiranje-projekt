@@ -10,6 +10,23 @@ $stmt = $pdo->prepare('SELECT * FROM orders WHERE user_id = :user_id ORDER BY cr
 $stmt->execute(['user_id' => currentUserId()]);
 $orders = $stmt->fetchAll();
 
+// Dohvati stavke za sve narudžbe odjednom
+$orderItems = [];
+if ($orders) {
+    $orderIds = array_column($orders, 'id');
+    $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+    $itemStmt = $pdo->prepare(
+        "SELECT oi.order_id, oi.quantity, oi.price_at_purchase, p.name, p.image_url
+         FROM order_items oi
+         JOIN products p ON p.id = oi.product_id
+         WHERE oi.order_id IN ($placeholders)"
+    );
+    $itemStmt->execute($orderIds);
+    foreach ($itemStmt->fetchAll() as $item) {
+        $orderItems[$item['order_id']][] = $item;
+    }
+}
+
 $pageTitle = 'Moj profil';
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -23,27 +40,36 @@ require_once __DIR__ . '/includes/header.php';
         <?php if (!$orders): ?>
             <p>Nemate još nijednu narudžbu.</p>
         <?php else: ?>
-            <div class="orders-table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Datum</th>
-                            <th>Status</th>
-                            <th>Iznos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($orders as $order): ?>
-                            <tr>
-                                <td>#<?= (int) $order['id']; ?></td>
-                                <td><?= e($order['created_at']); ?></td>
-                                <td><?= e($order['status']); ?></td>
-                                <td><?= formatPrice((float) $order['total_price']); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="orders-list">
+                <?php foreach ($orders as $order): ?>
+                    <div class="order-card">
+                        <div class="order-card-header">
+                            <span class="order-id">#<?= (int) $order['id']; ?></span>
+                            <span class="order-date"><?= e($order['created_at']); ?></span>
+                            <span class="order-status badge"><?= e($order['status']); ?></span>
+                            <span class="order-total"><?= formatPrice((float) $order['total_price']); ?></span>
+                        </div>
+
+                        <?php if (!empty($orderItems[$order['id']])): ?>
+                            <ul class="order-items-list">
+                                <?php foreach ($orderItems[$order['id']] as $item): ?>
+                                    <li class="order-item">
+                                        <img src="<?= e($item['image_url']); ?>" alt="<?= e($item['name']); ?>" width="52" height="52" loading="lazy">
+                                        <div class="order-item-info">
+                                            <span class="order-item-name"><?= e($item['name']); ?></span>
+                                            <span class="order-item-meta">
+                                                <?= (int) $item['quantity']; ?> kom &times; <?= formatPrice((float) $item['price_at_purchase']); ?>
+                                            </span>
+                                        </div>
+                                        <span class="order-item-line">
+                                            <?= formatPrice((float) $item['quantity'] * $item['price_at_purchase']); ?>
+                                        </span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </div>

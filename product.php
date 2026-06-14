@@ -18,10 +18,27 @@ if (!$product) {
 
 $addedToCart = false;
 
+$stockError = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = max(1, (int) ($_POST['quantity'] ?? 1));
-    addToCart($id, $quantity);
-    $addedToCart = true;
+    $available = (int) $product['stock'];
+
+    // Koliko korisnik već ima u košarici
+    $inCart = 0;
+    foreach ($_SESSION['cart'] ?? [] as $cartItem) {
+        if ($cartItem['product_id'] === $id) {
+            $inCart = $cartItem['quantity'];
+            break;
+        }
+    }
+
+    if ($quantity + $inCart > $available) {
+        $stockError = 'Nije moguće dodati ' . $quantity . ' kom. Dostupno: ' . max(0, $available - $inCart) . ' kom.';
+    } else {
+        addToCart($id, $quantity);
+        $addedToCart = true;
+    }
 }
 
 $pageTitle = $product['name'];
@@ -46,10 +63,13 @@ require_once __DIR__ . '/includes/header.php';
                 <li><strong>Težina:</strong> <?= e((string) $product['weight_kg']); ?> kg</li>
                 <li><strong>Dostupno:</strong> <?= e((string) $product['stock']); ?> kom</li>
             </ul>
+            <?php if ($stockError): ?>
+                <p class="form-error"><?= e($stockError); ?></p>
+            <?php endif; ?>
 
             <form method="POST" class="buy-box">
                 <label>Količina
-                    <input type="number" name="quantity" min="1" max="10" value="1" required>
+                    <input type="number" name="quantity" min="1" max="<?= (int) $product['stock']; ?>" value="1" required>
                 </label>
                 <button class="button" type="submit">Dodaj u košaricu</button>
             </form>

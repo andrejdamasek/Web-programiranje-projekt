@@ -48,3 +48,10 @@ function addToCart(int $productId, int $quantity = 1): void {
         'quantity' => $quantity,
     ];
 }
+
+function getStock(PDO $pdo, int $productId): int {
+    $stmt = $pdo->prepare('SELECT stock FROM products WHERE id = :id');
+    $stmt->execute(['id' => $productId]);
+    $row = $stmt->fetch();
+    return $row ? (int) $row['stock'] : 0;
+}

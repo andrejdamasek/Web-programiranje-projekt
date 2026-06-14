@@ -34,32 +34,63 @@ if ($cartItems) {
 }
 
 if (isset($_POST['checkout']) && isLoggedIn() && $products) {
-    $pdo->beginTransaction();
 
-    $orderStmt = $pdo->prepare('INSERT INTO orders (user_id, total_price, status)
-                                VALUES (:user_id, :total_price, :status)');
-    $orderStmt->execute([
-        'user_id' => currentUserId(),
-        'total_price' => $total,
-        'status' => 'nova',
-    ]);
-
-    $orderId = (int) $pdo->lastInsertId();
-
-    $itemStmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase)
-                               VALUES (:order_id, :product_id, :quantity, :price_at_purchase)');
+    // Provjeri zalihe za sve stavke prije nego što kreneš s transakcijom
+    $stockErrors = [];
     foreach ($products as $item) {
-        $itemStmt->execute([
-            'order_id' => $orderId,
-            'product_id' => $item['product']['id'],
-            'quantity' => $item['quantity'],
-            'price_at_purchase' => $item['product']['price'],
-        ]);
+        $availableStock = (int) $item['product']['stock'];
+        if ($item['quantity'] > $availableStock) {
+            $stockErrors[] = '"' . $item['product']['name'] . '" — traženo: ' . $item['quantity']
+                . ' kom, dostupno: ' . $availableStock . ' kom.';
+        }
     }
 
-    $pdo->commit();
-    $_SESSION['cart'] = [];
-    redirect('profile.php');
+    if ($stockErrors) {
+        $checkoutError = 'Narudžba nije moguća zbog nedovoljnih zaliha:<br>' . implode('<br>', $stockErrors);
+    } else {
+        $pdo->beginTransaction();
+        try {
+            $orderStmt = $pdo->prepare('INSERT INTO orders (user_id, total_price, status)
+                                        VALUES (:user_id, :total_price, :status)');
+            $orderStmt->execute([
+                'user_id'     => currentUserId(),
+                'total_price' => $total,
+                'status'      => 'nova',
+            ]);
+            $orderId = (int) $pdo->lastInsertId();
+
+            $itemStmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase)
+                                       VALUES (:order_id, :product_id, :quantity, :price_at_purchase)');
+            $stockStmt = $pdo->prepare('UPDATE products SET stock = stock - :qty WHERE id = :id AND stock >= :qty_check');
+
+            foreach ($products as $item) {
+                $itemStmt->execute([
+                    'order_id'          => $orderId,
+                    'product_id'        => $item['product']['id'],
+                    'quantity'          => $item['quantity'],
+                    'price_at_purchase' => $item['product']['price'],
+                ]);
+                // Smanji stock — uvjet stock >= qty sprječava negativne vrijednosti
+                $stockStmt->execute([
+                    'qty' => $item['quantity'],
+                    'id'  => $item['product']['id'],
+                    'qty_check' => $item['quantity'],
+                ]);
+                if ($stockStmt->rowCount() === 0) {
+                    // Drugi korisnik je u međuvremenu kupio — rollback
+                    throw new \RuntimeException('Nedovoljno zaliha za "' . $item['product']['name'] . '".');
+                }
+            }
+
+            $pdo->commit();
+            $_SESSION['cart'] = [];
+            redirect('profile.php');
+
+        } catch (\RuntimeException $e) {
+            $pdo->rollBack();
+            $checkoutError = $e->getMessage();
+        }
+    }
 }
 
 $pageTitle = 'Košarica';
@@ -89,6 +120,10 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <div class="checkout-box">
+                <?php if (!empty($checkoutError)): ?>
+                    <p class="form-error"><?= $checkoutError; ?></p>
+                <?php endif; ?>
+
                 <p><strong>Ukupno za naplatu:</strong> <?= formatPrice((float) $total); ?></p>
 
                 <?php if (isLoggedIn()): ?>
