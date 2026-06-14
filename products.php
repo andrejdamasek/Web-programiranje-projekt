@@ -19,7 +19,7 @@ $powerType       = $_GET['power_type'] ?? '';
 $priceDefaults = [
     'kosilice'    => ['min' => 200, 'max' => 740],
     'trimeri'     => ['min' => 38,  'max' => 220],
-    'sjeme-trave' => ['min' => 0,   'max' => 500],
+    'sjeme-trave' => ['min' => 0,   'max' => 30],
 ];
 $priceMin = isset($priceDefaults[$category]) ? $priceDefaults[$category]['min'] : 0;
 $priceMax = isset($priceDefaults[$category]) ? $priceDefaults[$category]['max'] : 9999;
@@ -377,17 +377,18 @@ $products = $stmt->fetchAll();
 
     // resetValues=false na page load — ne prepisuj PHP-renderirane vrijednosti
     function updateFilters(cat, resetValues) {
-        document.querySelectorAll('.filter-group').forEach(function (group) {
-            const groupCat = group.getAttribute('data-category');
-            if (cat === '' || cat === groupCat) {
-                group.style.display = '';
-            } else {
-                group.style.display = 'none';
-                if (resetValues) {
-                    group.querySelectorAll('select').forEach(function (s) { s.value = ''; });
-                    group.querySelectorAll('input[type="number"]').forEach(function (i) { i.value = ''; });
-                }
-            }
+    document.querySelectorAll('.filter-group').forEach(function (group) {
+        const groupCat = group.getAttribute('data-category');
+        const visible = (cat === '' || cat === groupCat);
+        group.style.display = visible ? '' : 'none';
+        // Disabled skriveni elementi se ne šalju u formi — rješava dupli power_type bug
+        group.querySelectorAll('select, input').forEach(function (el) {
+            el.disabled = !visible;
+        });
+        if (!visible && resetValues) {
+            group.querySelectorAll('select').forEach(function (s) { s.value = ''; });
+            group.querySelectorAll('input[type="number"]').forEach(function (i) { i.value = ''; });
+        }
         });
 
         const def = priceDefaults[cat] || priceDefaults[''];

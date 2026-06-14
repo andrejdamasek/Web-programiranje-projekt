@@ -44,6 +44,10 @@ require_once __DIR__ . '/includes/header.php';
             </label>
             <button class="button" type="submit">Prijavi se</button>
         </form>
+        <p class="auth-register-hint">
+            Još niste registrirani?
+            <a href="register.php" class="text-link">Registrirajte se</a>
+        </p>
     </div>
 </section>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

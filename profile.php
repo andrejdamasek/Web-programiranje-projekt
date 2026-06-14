@@ -16,7 +16,7 @@ require_once __DIR__ . '/includes/header.php';
 <section class="section">
     <div class="container narrow-container">
         <h1>Moj profil</h1>
-        <p>Prijavljeni ste kao <?= e($_SESSION['user']['name']); ?> (<?= e($_SESSION['user']['email']); ?>).</p>
+        <p>Pozdrav, <?= e($_SESSION['user']['name']); ?> (<?= e($_SESSION['user']['email']); ?>).</p>
 
         <h2>Moje narudžbe</h2>
 

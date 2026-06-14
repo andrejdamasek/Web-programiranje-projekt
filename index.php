@@ -46,10 +46,12 @@ $featuredProducts = $featuredStmt->fetchAll();
         <div class="product-grid">
             <?php foreach ($featuredProducts as $product): ?>
                 <article class="product-card">
-                    <img src="<?= e($product['image_url']); ?>" alt="<?= e($product['name']); ?>" loading="lazy">
+                    <a class="product-card-img-link" href="product.php?id=<?= (int) $product['id']; ?>" tabindex="-1" aria-hidden="true">
+                        <img src="<?= e($product['image_url']); ?>" alt="<?= e($product['name']); ?>" loading="lazy">
+                    </a>
                     <div class="product-card-body">
                         <span class="badge"><?= e($product['category_name']); ?></span>
-                        <h3><?= e($product['name']); ?></h3>
+                        <h3><a class="product-card-title-link" href="product.php?id=<?= (int) $product['id']; ?>"><?= e($product['name']); ?></a></h3>
                         <p><?= e(mb_strimwidth($product['short_description'], 0, 90, '...')); ?></p>
                         <div class="product-card-footer">
                             <strong><?= formatPrice((float) $product['price']); ?></strong>

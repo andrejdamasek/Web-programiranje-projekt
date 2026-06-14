@@ -469,3 +469,99 @@ table td {
     height: 180px;
   }
 }
+
+
+/* ── Košarica modal ───────────────────────────────────────────── */
+.cart-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(31, 42, 31, 0.45);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: modalFadeIn 0.22s ease;
+}
+
+.cart-modal-overlay.cart-modal-closing {
+  animation: modalFadeOut 0.22s ease forwards;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modalFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.cart-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 64px rgba(26, 45, 18, 0.18);
+  padding: 2rem 2rem 1.75rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  animation: modalSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cart-modal-overlay.cart-modal-closing .cart-modal {
+  animation: modalSlideDown 0.22s ease forwards;
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes modalSlideDown {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(24px); opacity: 0; }
+}
+
+.cart-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.cart-modal h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+}
+
+.cart-modal p {
+  color: var(--muted);
+  margin: 0 0 1.5rem;
+}
+
+.cart-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cart-modal-actions .button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── Auth — link za registraciju ─────────────────────────────── */
+.auth-register-hint {
+  margin-top: 1.25rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.92rem;
+}

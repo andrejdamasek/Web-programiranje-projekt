@@ -16,10 +16,12 @@ if (!$product) {
     exit('Proizvod nije pronađen.');
 }
 
+$addedToCart = false;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = max(1, (int) ($_POST['quantity'] ?? 1));
     addToCart($id, $quantity);
-    redirect('cart.php');
+    $addedToCart = true;
 }
 
 $pageTitle = $product['name'];
@@ -54,4 +56,48 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 </section>
+
+<?php if ($addedToCart): ?>
+<div class="cart-modal-overlay" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle">
+    <div class="cart-modal">
+        <div class="cart-modal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="32" height="32">
+                <path d="M20 6L9 17l-5-5"/>
+            </svg>
+        </div>
+        <h2 id="cartModalTitle">Dodano u košaricu!</h2>
+        <p><strong><?= e($product['name']); ?></strong> uspješno je dodan u vašu košaricu.</p>
+        <div class="cart-modal-actions">
+            <a href="cart.php" class="button">Nastavi u košaricu</a>
+            <button class="button button-secondary" id="continueShoppingBtn">Nastavi kupovinu</button>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    const modal = document.getElementById('cartModal');
+    const continueBtn = document.getElementById('continueShoppingBtn');
+
+    continueBtn.addEventListener('click', function () {
+        modal.classList.add('cart-modal-closing');
+        setTimeout(function () { modal.remove(); }, 250);
+    });
+
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            modal.classList.add('cart-modal-closing');
+            setTimeout(function () { modal.remove(); }, 250);
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            modal.classList.add('cart-modal-closing');
+            setTimeout(function () { modal.remove(); }, 250);
+        }
+    });
+})();
+</script>
+<?php endif; ?>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
