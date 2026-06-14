@@ -41,6 +41,7 @@ require_once __DIR__ . '/includes/header.php';
                 <li><strong>Pogon:</strong> <?= e($product['power_type'] ?: 'Nije primjenjivo'); ?></li>
                 <li><strong>Vrsta rezanja:</strong> <?= e($product['blade_type'] ?: 'Nije primjenjivo'); ?></li>
                 <li><strong>Radna širina:</strong> <?= e((string) $product['cutting_width_cm']); ?> cm</li>
+                <li><strong>Težina:</strong> <?= e((string) $product['weight_kg']); ?> kg</li>
                 <li><strong>Dostupno:</strong> <?= e((string) $product['stock']); ?> kom</li>
             </ul>
 
