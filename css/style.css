@@ -1,5 +1,5 @@
 :root {
-  --bg: #f4f5ef;
+  --bg: #e7f7e5;
   --surface: #ffffff;
   --surface-2: #eef3e8;
   --text: #1f2a1f;
@@ -22,6 +22,13 @@ body {
   font-family: 'Inter', sans-serif;
   color: var(--text);
   background: var(--bg);
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+main {
+  flex: 1;
 }
 
 a {
