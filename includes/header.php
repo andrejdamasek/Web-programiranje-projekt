@@ -30,6 +30,7 @@
             <a href="products.php?category=kosilice">Kosilice</a>
             <a href="products.php?category=trimeri">Trimeri</a>
             <a href="products.php?category=sjeme-trave">Sjeme trave</a>
+            <a href="literatura.php">Literatura</a>
             <a href="cart.php">Košarica (<?= cartCount(); ?>)</a>
 
             <?php if (isLoggedIn()): ?>

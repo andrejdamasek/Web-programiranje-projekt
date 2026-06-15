@@ -1,20 +1,19 @@
 <?php
-require_once __DIR__ . '/config/database.php';
 $pageTitle = 'Proizvodi';
-require_once __DIR__ . '/includes/header.php';
 
-$category        = $_GET['category']        ?? '';
-$bladeType       = $_GET['blade_type']      ?? '';
-$minWidth        = $_GET['min_width']       ?? '';
-$maxWidth        = $_GET['max_width']       ?? '';
-$basketCapacity  = $_GET['basket_capacity'] ?? '';
-$trimmerBlade    = $_GET['trimmer_blade']   ?? '';
-$maxWeight       = $_GET['max_weight']      ?? '';
-$weightRange     = $_GET['weight_range']    ?? '';
-$seedWeight      = $_GET['seed_weight']     ?? '';
-$minPrice        = $_GET['min_price']       ?? '';
-$maxPrice        = $_GET['max_price']       ?? '';
-$powerType       = $_GET['power_type'] ?? '';
+// Čitamo GET parametre samo za inicijalni prikaz filtera (selected stanja)
+$category       = $_GET['category']        ?? '';
+$bladeType      = $_GET['blade_type']      ?? '';
+$minWidth       = $_GET['min_width']       ?? '';
+$maxWidth       = $_GET['max_width']       ?? '';
+$basketCapacity = $_GET['basket_capacity'] ?? '';
+$trimmerBlade   = $_GET['trimmer_blade']   ?? '';
+$maxWeight      = $_GET['max_weight']      ?? '';
+$weightRange    = $_GET['weight_range']    ?? '';
+$seedWeight     = $_GET['seed_weight']     ?? '';
+$minPrice       = $_GET['min_price']       ?? '';
+$maxPrice       = $_GET['max_price']       ?? '';
+$powerType      = $_GET['power_type']      ?? '';
 
 $priceDefaults = [
     'kosilice'    => ['min' => 200, 'max' => 2510],
@@ -26,67 +25,7 @@ $priceMax = isset($priceDefaults[$category]) ? $priceDefaults[$category]['max'] 
 $currentMinPrice = ($minPrice !== '') ? (float)$minPrice : $priceMin;
 $currentMaxPrice = ($maxPrice !== '') ? (float)$maxPrice : $priceMax;
 
-$sql = "SELECT p.*, c.name AS category_name, c.slug AS category_slug
-        FROM products p
-        JOIN categories c ON p.category_id = c.id
-        WHERE 1=1";
-$params = [];
-
-if ($category !== '') {
-    $sql .= " AND c.slug = :category";
-    $params['category'] = $category;
-}
-
-if ($powerType !== '') {
-    $sql .= " AND p.power_type = :power_type";
-    $params['power_type'] = $powerType;
-}
-
-if ($bladeType !== '') {
-    $sql .= " AND p.blade_type = :blade_type";
-    $params['blade_type'] = $bladeType;
-}
-if ($minWidth !== '') {
-    $sql .= " AND p.cutting_width_cm >= :min_width";
-    $params['min_width'] = (int) $minWidth;
-}
-if ($maxWidth !== '') {
-    $sql .= " AND p.cutting_width_cm <= :max_width";
-    $params['max_width'] = (int) $maxWidth;
-}
-if ($basketCapacity !== '') {
-    $sql .= " AND p.basket_capacity_l >= :basket_capacity";
-    $params['basket_capacity'] = (float) $basketCapacity;
-}
-if ($trimmerBlade === 'nit') {
-    $sql .= " AND p.blade_type IN ('nit', 'nit/nož')";
-} elseif ($trimmerBlade === 'noz') {
-    $sql .= " AND p.blade_type IN ('nit/nož', 'nož')";
-}
-if ($maxWeight !== '') {
-    $sql .= " AND p.weight_kg <= :max_weight";
-    $params['max_weight'] = (float) $maxWeight;
-}
-if ($weightRange === 'above6') {
-    $sql .= " AND p.weight_kg >= 6";
-}
-if ($seedWeight !== '') {
-    $sql .= " AND p.weight_kg = :seed_weight";
-    $params['seed_weight'] = (float) $seedWeight;
-}
-if ($minPrice !== '') {
-    $sql .= " AND p.price >= :min_price";
-    $params['min_price'] = (float) $minPrice;
-}
-if ($maxPrice !== '') {
-    $sql .= " AND p.price <= :max_price";
-    $params['max_price'] = (float) $maxPrice;
-}
-
-$sql .= " ORDER BY p.created_at DESC";
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$products = $stmt->fetchAll();
+require_once __DIR__ . '/includes/header.php';
 ?>
 <section class="section">
     <div class="container catalog-layout">
@@ -105,7 +44,7 @@ $products = $stmt->fetchAll();
 
                 <?php /* ===== KOSILICE ===== */ ?>
                 <div class="filter-group" data-category="kosilice"
-                     data-price-min="200" data-price-max="740"
+                     data-price-min="200" data-price-max="2510"
                      style="<?= ($category !== '' && $category !== 'kosilice') ? 'display:none' : ''; ?>">
                     <label>Vrsta pogona
                         <select name="power_type">
@@ -128,7 +67,7 @@ $products = $stmt->fetchAll();
                             <input type="number" name="min_width" min="33" value="<?= e((string) $minWidth); ?>">
                         </label>
                         <label>Max. širina košnje (cm)
-                            <input type="number" name="max_width" min="33" max="51" value="<?= e((string) $maxWidth); ?>">
+                            <input type="number" name="max_width" min="33" max="87" value="<?= e((string) $maxWidth); ?>">
                         </label>
                     </div>
 
@@ -153,13 +92,12 @@ $products = $stmt->fetchAll();
                             <option value="benzinski"     <?= $powerType === 'benzinski'     ? 'selected' : ''; ?>>Benzinski</option>
                         </select>
                     </label>
-                    
-                
-                     <label>Vrsta oštrice
+
+                    <label>Vrsta oštrice
                         <select name="trimmer_blade">
                             <option value="">Sve vrste</option>
-                            <option value="nit"  <?= $trimmerBlade === 'nit'  ? 'selected' : ''; ?>>Nit (najlonska glava)</option>
-                            <option value="noz"  <?= $trimmerBlade === 'noz'  ? 'selected' : ''; ?>>Metalni nož</option>
+                            <option value="nit" <?= $trimmerBlade === 'nit' ? 'selected' : ''; ?>>Nit (najlonska glava)</option>
+                            <option value="noz" <?= $trimmerBlade === 'noz' ? 'selected' : ''; ?>>Metalni nož</option>
                         </select>
                     </label>
 
@@ -204,7 +142,7 @@ $products = $stmt->fetchAll();
                         <div class="price-slider-track" id="price-track">
                             <div class="price-slider-range" id="price-range"></div>
                         </div>
-                        <input class="price-thumb price-thumb--left"  type="range" id="thumb-min"
+                        <input class="price-thumb price-thumb--left" type="range" id="thumb-min"
                                min="1" max="9999" step="1" value="<?= e((string) $currentMinPrice); ?>">
                         <input class="price-thumb price-thumb--right" type="range" id="thumb-max"
                                min="1" max="9999" step="1" value="<?= e((string) $currentMaxPrice); ?>">
@@ -215,66 +153,25 @@ $products = $stmt->fetchAll();
                     </div>
                 </div>
 
-                <button class="button" type="submit">Primijeni filtere</button>
+                <button type="submit" class="button" style="width:100%; margin-top: 0.5rem;">Primijeni filtere</button>
             </form>
         </aside>
 
-        <div>
-            <div class="section-heading compact">
+        <div class="catalog-main">
+            <div class="section-heading">
                 <div>
                     <p class="eyebrow">Rezultati pretrage</p>
-                    <h2>Pronađeno proizvoda: <?= count($products); ?></h2>
+                    <h2 id="results-count">Učitavanje...</h2>
                 </div>
             </div>
 
-            <div class="product-grid">
-                <?php foreach ($products as $product): ?>
-                    <article class="product-card">
-                        <a href="product.php?id=<?= (int) $product['id']; ?>" class="product-card-img-link">
-                            <img src="<?= e($product['image_url']); ?>" alt="<?= e($product['name']); ?>" loading="lazy">
-                        </a>
-                        <div class="product-card-body">
-                            <span class="badge"><?= e($product['category_name']); ?></span>
-                            <h3>
-                                <a href="product.php?id=<?= (int) $product['id']; ?>" class="product-card-title-link">
-                                    <?= e($product['name']); ?>
-                                </a>
-                            </h3>
-                            <p><?= e(mb_strimwidth($product['short_description'], 0, 90, '...')); ?></p>
-
-                            <ul class="spec-list">
-                                <?php if ($product['category_slug'] === 'kosilice'): ?>
-                                    <?php if ($product['cutting_width_cm']): ?>
-                                        <li><span class="spec-label">Radna širina: </span><span><?= e((string) $product['cutting_width_cm']); ?> cm</span></li>
-                                    <?php endif; ?>                               
-                
-                                    <?php if ($product['power_type']): ?>
-                                        <li><span class="spec-label">Pogon: </span><span><?= e($product['power_type']); ?></span></li>
-                                    <?php endif; ?>
-
-                                <?php elseif ($product['category_slug'] === 'trimeri'): ?>
-                                    
-                                    
-                                    <?php if ($product['cutting_width_cm']): ?>
-                                        <li><span class="spec-label">Radna širina: </span><span><?= e((string) $product['cutting_width_cm']); ?> cm</span></li>
-                                    <?php endif; ?>
-                                    <?php if ($product['power_type']): ?>
-                                        <li><span class="spec-label">Pogon: </span><span><?= e($product['power_type']); ?></span></li>
-                                    <?php endif; ?>
-
-                                <?php elseif ($product['category_slug'] === 'sjeme-trave'): ?>
-                                   
-                                <?php endif; ?>
-                            </ul>
-
-                            <div class="product-card-footer">
-                                <strong><?= formatPrice((float) $product['price']); ?></strong>
-                                <a class="text-link" href="product.php?id=<?= (int) $product['id']; ?>">Detalji →</a>
-                            </div>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+            <div class="product-grid" id="product-grid">
+                <!-- Kartice se dinamički pune JavaScriptom putem AJAX poziva -->
             </div>
+
+            <p id="no-results" style="display:none; color: var(--color-text-muted); margin-top: 2rem;">
+                Nema pronađenih proizvoda za odabrane filtere.
+            </p>
         </div>
     </div>
 </section>
@@ -357,6 +254,8 @@ $products = $stmt->fetchAll();
 
 <script>
 (function () {
+    // ── Filter UI logika (kategorije, slider) ──────────────────────────────
+
     const catSelect = document.getElementById('category-select');
     if (!catSelect) return;
 
@@ -375,41 +274,35 @@ $products = $stmt->fetchAll();
     const labelMin = document.getElementById('slider-label-min');
     const labelMax = document.getElementById('slider-label-max');
 
-    // resetValues=false na page load — ne prepisuj PHP-renderirane vrijednosti
     function updateFilters(cat, resetValues) {
-    document.querySelectorAll('.filter-group').forEach(function (group) {
-        const groupCat = group.getAttribute('data-category');
-        const visible = (cat === '' || cat === groupCat);
-        group.style.display = visible ? '' : 'none';
-        // Disabled skriveni elementi se ne šalju u formi — rješava dupli power_type bug
-        group.querySelectorAll('select, input').forEach(function (el) {
-            el.disabled = !visible;
-        });
-        if (!visible && resetValues) {
-            group.querySelectorAll('select').forEach(function (s) { s.value = ''; });
-            group.querySelectorAll('input[type="number"]').forEach(function (i) { i.value = ''; });
-        }
+        document.querySelectorAll('.filter-group').forEach(function (group) {
+            const groupCat = group.getAttribute('data-category');
+            const visible  = (cat === '' || cat === groupCat);
+            group.style.display = visible ? '' : 'none';
+            group.querySelectorAll('select, input').forEach(function (el) {
+                el.disabled = !visible;
+            });
+            if (!visible && resetValues) {
+                group.querySelectorAll('select').forEach(function (s) { s.value = ''; });
+                group.querySelectorAll('input[type="number"]').forEach(function (i) { i.value = ''; });
+            }
         });
 
         const def = priceDefaults[cat] || priceDefaults[''];
         if (resetValues) {
-            // Korisnik je promijenio kategoriju — resetiraj cijenu na category defaultove
             setSliderBounds(def.min, def.max, def.min, def.max);
         } else {
-            // Page load — zadrži vrijednosti koje je PHP već postavio iz URL parametara
             var curMin = parseFloat(inputMin.value);
             var curMax = parseFloat(inputMax.value);
             if (isNaN(curMin)) curMin = def.min;
             if (isNaN(curMax)) curMax = def.max;
             setSliderBounds(def.min, def.max, curMin, curMax);
         }
-                    
-        
-
     }
 
     catSelect.addEventListener('change', function () {
         updateFilters(this.value, true);
+        loadProducts();
     });
 
     // Trimmer weight special handling
@@ -470,9 +363,109 @@ $products = $stmt->fetchAll();
         updateTrack();
     });
 
-    // Init — false = ne resetiraj vrijednosti na page load
+    // Init
     updateFilters(catSelect.value, false);
     updateTrack();
+
+    // ── AJAX dohvat i renderiranje proizvoda ───────────────────────────────
+
+    function formatPrice(price) {
+        return parseFloat(price).toLocaleString('hr-HR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + ' €';
+    }
+
+    function buildProductCard(p) {
+        let specs = '';
+        if (p.category_slug === 'kosilice' || p.category_slug === 'trimeri') {
+            if (p.cutting_width_cm) {
+                specs += `<li><span class="spec-label">Radna širina: </span><span>${p.cutting_width_cm} cm</span></li>`;
+            }
+            if (p.power_type) {
+                specs += `<li><span class="spec-label">Pogon: </span><span>${p.power_type}</span></li>`;
+            }
+        }
+
+        const shortDesc = p.short_description && p.short_description.length > 90
+            ? p.short_description.substring(0, 90) + '...'
+            : (p.short_description || '');
+
+        return `
+            <article class="product-card">
+                <a href="product.php?id=${p.id}" class="product-card-img-link">
+                    <img src="${p.image_url}" alt="${p.name}" loading="lazy">
+                </a>
+                <div class="product-card-body">
+                    <span class="badge">${p.category_name}</span>
+                    <h3>
+                        <a href="product.php?id=${p.id}" class="product-card-title-link">${p.name}</a>
+                    </h3>
+                    <p>${shortDesc}</p>
+                    <ul class="spec-list">${specs}</ul>
+                    <div class="product-card-footer">
+                        <strong>${formatPrice(p.price)}</strong>
+                        <a class="text-link" href="product.php?id=${p.id}">Detalji →</a>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function loadProducts() {
+        const form      = document.getElementById('filter-form');
+        const grid      = document.getElementById('product-grid');
+        const countEl   = document.getElementById('results-count');
+        const noResults = document.getElementById('no-results');
+
+        if (!form || !grid) return;
+
+        countEl.textContent = 'Učitavanje...';
+
+        const params = new URLSearchParams(new FormData(form));
+
+        fetch('api/products.php?' + params.toString())
+            .then(function (response) { return response.json(); })
+            .then(function (products) {
+                grid.innerHTML = '';
+                if (products.length === 0) {
+                    noResults.style.display = '';
+                    countEl.textContent = 'Pronađeno proizvoda: 0';
+                } else {
+                    noResults.style.display = 'none';
+                    countEl.textContent = 'Pronađeno proizvoda: ' + products.length;
+                    grid.innerHTML = products.map(buildProductCard).join('');
+                }
+            })
+            .catch(function (err) {
+                console.error('Greška pri dohvatu proizvoda:', err);
+                countEl.textContent = 'Greška pri učitavanju.';
+            });
+    }
+
+    // Inicijalni load stranice
+    loadProducts();
+
+    // Submit forme (gumb "Primijeni filtere")
+    document.getElementById('filter-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        loadProducts();
+    });
+
+    // Automatski osvježi pri promjeni select-a
+    document.querySelectorAll('#filter-form select').forEach(function (sel) {
+        sel.addEventListener('change', loadProducts);
+    });
+
+    // Osvježi kad se number input promijeni
+    document.querySelectorAll('#filter-form input[type="number"]').forEach(function (inp) {
+        inp.addEventListener('change', loadProducts);
+    });
+
+    // Osvježi kad se price slider otpusti
+    if (thumbMin) thumbMin.addEventListener('change', loadProducts);
+    if (thumbMax) thumbMax.addEventListener('change', loadProducts);
+
 })();
 </script>
 
