@@ -507,6 +507,10 @@ require_once __DIR__ . '/includes/header.php';
         const params = new URLSearchParams(new FormData(form));
         const sortVal = document.getElementById('sort-select').value;
         if (sortVal) params.set('sort', sortVal);
+        
+        // Spremi trenutni URL s filterima u sessionStorage kako bi ga product.php mogao koristiti
+        const currentUrl = 'products.php?' + params.toString();
+        sessionStorage.setItem('productsUrl', currentUrl);
 
         fetch('api/products.php?' + params.toString())
             .then(function (response) { return response.json(); })

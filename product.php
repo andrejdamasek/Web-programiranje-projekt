@@ -45,6 +45,15 @@ $pageTitle = $product['name'];
 require_once __DIR__ . '/includes/header.php';
 ?>
 <section class="section">
+    <div class="container">
+        <a href="#" id="back-btn" class="back-btn" aria-label="Povratak na listu proizvoda">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+            Povratak na proizvode
+        </a>
+    </div>
     <div class="container product-detail-grid">
         <div class="product-image-panel">
             <img src="<?= e($product['image_url']); ?>" alt="<?= e($product['name']); ?>" loading="lazy">

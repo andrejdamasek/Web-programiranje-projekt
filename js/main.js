@@ -60,4 +60,18 @@ document.addEventListener('DOMContentLoaded', () => {
             wrap.style.display = url ? '' : 'none';
         });
     })();
+
+    // Back button: vrati na products.php s aktivnim filterima
+    (function () {
+        const btn = document.getElementById('back-btn');
+        if (!btn) return;
+        const ref = document.referrer;
+        if (ref && ref.indexOf('products.php') !== -1) {
+            btn.href = ref;
+        } else {
+            const saved = sessionStorage.getItem('productsUrl');
+            btn.href = saved || 'products.php';
+        }
+    })();
+
 });
