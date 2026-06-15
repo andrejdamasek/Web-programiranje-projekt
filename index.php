@@ -9,12 +9,11 @@ $featuredProducts = $featuredStmt->fetchAll();
 <section class="hero section">
     <div class="container hero-grid">
         <div>
-            <p class="eyebrow">Web trgovina za održavanje travnjaka</p>
+            <p class="eyebrow">Tvoj partner za uredan vrt</p>
             <h1>Oprema za uredan i zdrav travnjak na jednom mjestu.</h1>
-            <p class="hero-text">Pregledaj kosilice, trimere i odabrane vrste sjemena trave. Aplikacija sadrži katalog, filtriranje proizvoda, registraciju korisnika, košaricu i pregled narudžbi.</p>
+            <p class="hero-text">Pronađi proizvode koji pomažu da tvoj travnjak izgleda uredno, gusto i njegovano tijekom cijele sezone.</p>
             <div class="button-row">
                 <a class="button" href="products.php">Pregled proizvoda</a>
-                <a class="button button-secondary" href="register.php">Izradi račun</a>
             </div>
         </div>
 
@@ -26,9 +25,9 @@ $featuredProducts = $featuredStmt->fetchAll();
                 <a href="products.php?category=sjeme-trave">Sjeme trave</a>
             </div>
             <ul class="feature-list">
-                <li>Filtriranje po pogonu i radnoj širini</li>
-                <li>Prijava i registracija korisnika</li>
-                <li>Košarica i pregled ranijih narudžbi</li>
+                <li>Kosilice za urednu i ravnomjernu košnju</li>
+                <li>Trimeri za rubove, kutove i teško dostupna mjesta</li>
+                <li>Sjeme trave za gust i zelen travnjak</li>
             </ul>
         </div>
     </div>

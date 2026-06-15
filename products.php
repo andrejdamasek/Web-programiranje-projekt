@@ -188,7 +188,7 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <div>
                     <label for="sort-select" style="font-size: var(--text-sm); font-weight: 600;">Sortiraj po:</label>
-                    <select id="sort-select" style="margin-left: 0.5rem; padding: 0.4rem 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: var(--text-sm); cursor: pointer;">
+                    <select id="sort-select" style="padding: 0.4rem 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background-color: #ffffff; color: var(--color-text); font-size: var(--text-sm); cursor: pointer;">
                         <option value="">Zadano</option>
                         <option value="price_asc">Cijena: od manje prema većoj ↑</option>
                         <option value="price_desc">Cijena: od veće prema manjoj ↓</option>

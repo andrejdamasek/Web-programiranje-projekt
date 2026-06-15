@@ -107,12 +107,12 @@ img {
 }
 
 .main-nav a {
-  padding: .7rem .95rem;
+  padding: .7rem; 
   border-radius: 999px;
 }
 
 .main-nav a:hover {
-  background: var(--surface);
+  background: var(--primary-dark);
 }
 
 .nav-toggle {
