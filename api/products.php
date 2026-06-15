@@ -73,7 +73,14 @@ if ($maxPrice !== '') {
     $params['max_price'] = (float) $maxPrice;
 }
 
-$sql .= ' ORDER BY p.created_at DESC';
+$sort = $_GET['sort'] ?? '';
+if ($sort === 'price_asc') {
+    $sql .= ' ORDER BY p.price ASC';
+} elseif ($sort === 'price_desc') {
+    $sql .= ' ORDER BY p.price DESC';
+} else {
+    $sql .= ' ORDER BY p.created_at DESC';
+}
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);

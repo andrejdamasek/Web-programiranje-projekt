@@ -163,6 +163,14 @@ require_once __DIR__ . '/includes/header.php';
                     <p class="eyebrow">Rezultati pretrage</p>
                     <h2 id="results-count">Učitavanje...</h2>
                 </div>
+                <div>
+                    <label for="sort-select" style="font-size: var(--text-sm); font-weight: 600;">Sortiraj po:</label>
+                    <select id="sort-select" style="margin-left: 0.5rem; padding: 0.4rem 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: var(--text-sm); cursor: pointer;">
+                        <option value="">Zadano</option>
+                        <option value="price_asc">Cijena: od manje prema većoj </option>
+                        <option value="price_desc">Cijena: od veće prema manjoj </option>
+                    </select>
+                </div>
             </div>
 
             <div class="product-grid" id="product-grid">
@@ -423,6 +431,8 @@ require_once __DIR__ . '/includes/header.php';
         countEl.textContent = 'Učitavanje...';
 
         const params = new URLSearchParams(new FormData(form));
+        const sortVal = document.getElementById('sort-select').value;
+        if (sortVal) params.set('sort', sortVal);
 
         fetch('api/products.php?' + params.toString())
             .then(function (response) { return response.json(); })
@@ -442,6 +452,10 @@ require_once __DIR__ . '/includes/header.php';
                 countEl.textContent = 'Greška pri učitavanju.';
             });
     }
+
+    document.getElementById('sort-select').addEventListener('change', () => {
+    loadProducts();
+});
 
     // Inicijalni load stranice
     loadProducts();
