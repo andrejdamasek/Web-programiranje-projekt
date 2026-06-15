@@ -15,20 +15,39 @@ $minPrice       = $_GET['min_price']       ?? '';
 $maxPrice       = $_GET['max_price']       ?? '';
 $powerType      = $_GET['power_type']      ?? '';
 
-$priceDefaults = [
-    'kosilice'    => ['min' => 200, 'max' => 2510],
-    'trimeri'     => ['min' => 38,  'max' => 220],
-    'sjeme-trave' => ['min' => 0,   'max' => 30],
-];
-$priceMin = isset($priceDefaults[$category]) ? $priceDefaults[$category]['min'] : 0;
-$priceMax = isset($priceDefaults[$category]) ? $priceDefaults[$category]['max'] : 9999;
+// Dinamički dohvat raspona cijena i širine iz baze
+require_once __DIR__ . '/config/database.php';
+
+$rangeData = [];
+$rangeStmt = $pdo->query("
+    SELECT c.slug, MIN(p.price) AS min_price, MAX(p.price) AS max_price
+    FROM products p JOIN categories c ON p.category_id = c.id
+    GROUP BY c.slug
+");
+foreach ($rangeStmt->fetchAll() as $row) {
+    $rangeData['price'][$row['slug']] = [
+        'min' => (float) $row['min_price'],
+        'max' => (float) $row['max_price'],
+    ];
+}
+$widthStmt = $pdo->query("
+    SELECT MIN(p.cutting_width_cm) AS min_w, MAX(p.cutting_width_cm) AS max_w
+    FROM products p JOIN categories c ON p.category_id = c.id
+    WHERE c.slug = 'kosilice' AND p.cutting_width_cm IS NOT NULL
+");
+$widthRow = $widthStmt->fetch();
+
+$priceMin = $rangeData['price'][$category]['min'] ?? 0;
+$priceMax = $rangeData['price'][$category]['max'] ?? 9999;
 $currentMinPrice = ($minPrice !== '') ? (float)$minPrice : $priceMin;
 $currentMaxPrice = ($maxPrice !== '') ? (float)$maxPrice : $priceMax;
 
-$widthMin = 33;
-$widthMax = 87;
+$widthMin = (int) ($widthRow['min_w'] ?? 33);
+$widthMax = (int) ($widthRow['max_w'] ?? 87);
 $currentMinWidth = ($minWidth !== '') ? (int)$minWidth : $widthMin;
 $currentMaxWidth = ($maxWidth !== '') ? (int)$maxWidth : $widthMax;
+
+$rangeJson = json_encode($rangeData['price'] ?? [], JSON_UNESCAPED_UNICODE);
 
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -49,7 +68,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <?php /* ===== KOSILICE ===== */ ?>
                 <div class="filter-group" data-category="kosilice"
-                     data-price-min="200" data-price-max="2510"
+                     data-price-min="<?= (float)($rangeData['price']['kosilice']['min'] ?? 200); ?>" data-price-max="<?= (float)($rangeData['price']['kosilice']['max'] ?? 2510); ?>"
                      style="<?= ($category !== '' && $category !== 'kosilice') ? 'display:none' : ''; ?>">
                     <label>Vrsta pogona
                         <select name="power_type">
@@ -71,11 +90,11 @@ require_once __DIR__ . '/includes/header.php';
                         <label class="price-filter-label">Širina košnje (cm)</label>
                         <div class="range-grid">
                             <label>
-                                <input type="number" name="min_width" id="min-width-input" min="33" max="87"
+                                <input type="number" name="min_width" id="min-width-input" min="<?= $widthMin; ?>" max="<?= $widthMax; ?>"
                                        value="<?= e((string) $currentMinWidth); ?>">
                             </label>
                             <label>
-                                <input type="number" name="max_width" id="max-width-input" min="33" max="87"
+                                <input type="number" name="max_width" id="max-width-input" min="<?= $widthMin; ?>" max="<?= $widthMax; ?>"
                                        value="<?= e((string) $currentMaxWidth); ?>">
                             </label>
                         </div>
@@ -84,9 +103,9 @@ require_once __DIR__ . '/includes/header.php';
                                 <div class="price-slider-range" id="width-range"></div>
                             </div>
                             <input class="price-thumb price-thumb--left" type="range" id="width-thumb-min"
-                                   min="33" max="87" step="1" value="<?= e((string) $currentMinWidth); ?>">
+                                   min="<?= $widthMin; ?>" max="<?= $widthMax; ?>" step="1" value="<?= e((string) $currentMinWidth); ?>">
                             <input class="price-thumb price-thumb--right" type="range" id="width-thumb-max"
-                                   min="33" max="87" step="1" value="<?= e((string) $currentMaxWidth); ?>">
+                                   min="<?= $widthMin; ?>" max="<?= $widthMax; ?>" step="1" value="<?= e((string) $currentMaxWidth); ?>">
                         </div>
                         <div class="price-slider-labels">
                             <span id="width-label-min"><?= e((string) $currentMinWidth); ?> cm</span>
@@ -106,7 +125,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <?php /* ===== TRIMERI ===== */ ?>
                 <div class="filter-group" data-category="trimeri"
-                     data-price-min="38" data-price-max="220"
+                     data-price-min="<?= (float)($rangeData['price']['trimeri']['min'] ?? 38); ?>" data-price-max="<?= (float)($rangeData['price']['trimeri']['max'] ?? 220); ?>"
                      style="<?= ($category !== 'trimeri') ? 'display:none' : ''; ?>">
                     <label>Vrsta pogona
                         <select name="power_type">
@@ -136,7 +155,7 @@ require_once __DIR__ . '/includes/header.php';
 
                 <?php /* ===== SJEME TRAVE ===== */ ?>
                 <div class="filter-group" data-category="sjeme-trave"
-                     data-price-min="6" data-price-max="30"
+                     data-price-min="<?= (float)($rangeData['price']['sjeme-trave']['min'] ?? 0); ?>" data-price-max="<?= (float)($rangeData['price']['sjeme-trave']['max'] ?? 30); ?>"
                      style="<?= ($category !== 'sjeme-trave') ? 'display:none' : ''; ?>">
                     <label>Pakiranje (težina)
                         <select name="seed_weight">
@@ -290,12 +309,12 @@ require_once __DIR__ . '/includes/header.php';
     const catSelect = document.getElementById('category-select');
     if (!catSelect) return;
 
-    const priceDefaults = {
-        'kosilice':    { min: 200,  max: 2510 },
-        'trimeri':     { min: 38,   max: 220  },
-        'sjeme-trave': { min: 6,    max: 30   },
-        '':            { min: 0,    max: 9999 },
-    };
+    const rangeData = <?= $rangeJson; ?>;
+    const priceDefaults = {};
+    for (const slug in rangeData) {
+        priceDefaults[slug] = { min: rangeData[slug].min, max: rangeData[slug].max };
+    }
+    priceDefaults[''] = { min: 0, max: 9999 };
 
     const thumbMin = document.getElementById('thumb-min');
     const thumbMax = document.getElementById('thumb-max');
@@ -334,8 +353,8 @@ require_once __DIR__ . '/includes/header.php';
     catSelect.addEventListener('change', function () {
         updateFilters(this.value, true);
         if (this.value !== 'kosilice') {
-            if (wThumbMin) { wThumbMin.value = 33; wInputMin.value = 33; }
-            if (wThumbMax) { wThumbMax.value = 87; wInputMax.value = 87; }
+            if (wThumbMin) { wThumbMin.value = <?= $widthMin; ?>; wInputMin.value = <?= $widthMin; ?>; }
+            if (wThumbMax) { wThumbMax.value = <?= $widthMax; ?>; wInputMax.value = <?= $widthMax; ?>; }
             updateWidthTrack();
         }
         loadProducts();
@@ -507,7 +526,7 @@ require_once __DIR__ . '/includes/header.php';
         const params = new URLSearchParams(new FormData(form));
         const sortVal = document.getElementById('sort-select').value;
         if (sortVal) params.set('sort', sortVal);
-        
+
         // Ažuriraj URL u browseru s aktivnim filterima (bez page reload-a)
         history.replaceState(null, '', 'products.php?' + params.toString());
 

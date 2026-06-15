@@ -46,7 +46,6 @@ require_once __DIR__ . '/includes/header.php';
                         <div class="order-card-header">
                             <span class="order-id">#<?= (int) $order['id']; ?></span>
                             <span class="order-date"><?= e($order['created_at']); ?></span>
-                            <span class="order-status badge"><?= e($order['status']); ?></span>
                             <span class="order-total"><?= formatPrice((float) $order['total_price']); ?></span>
                         </div>
 
