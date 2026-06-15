@@ -508,9 +508,8 @@ require_once __DIR__ . '/includes/header.php';
         const sortVal = document.getElementById('sort-select').value;
         if (sortVal) params.set('sort', sortVal);
         
-        // Spremi trenutni URL s filterima u sessionStorage kako bi ga product.php mogao koristiti
-        const currentUrl = 'products.php?' + params.toString();
-        sessionStorage.setItem('productsUrl', currentUrl);
+        // Ažuriraj URL u browseru s aktivnim filterima (bez page reload-a)
+        history.replaceState(null, '', 'products.php?' + params.toString());
 
         fetch('api/products.php?' + params.toString())
             .then(function (response) { return response.json(); })

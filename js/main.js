@@ -61,16 +61,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     })();
 
-    // Back button: vrati na products.php s aktivnim filterima
+    // Back button: vrati na prethodnu stranicu (s filterima ako je products.php)
     (function () {
         const btn = document.getElementById('back-btn');
         if (!btn) return;
         const ref = document.referrer;
-        if (ref && ref.indexOf('products.php') !== -1) {
+        if (ref) {
             btn.href = ref;
         } else {
-            const saved = sessionStorage.getItem('productsUrl');
-            btn.href = saved || 'products.php';
+            btn.href = 'products.php';
         }
     })();
 
