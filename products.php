@@ -25,6 +25,11 @@ $priceMax = isset($priceDefaults[$category]) ? $priceDefaults[$category]['max'] 
 $currentMinPrice = ($minPrice !== '') ? (float)$minPrice : $priceMin;
 $currentMaxPrice = ($maxPrice !== '') ? (float)$maxPrice : $priceMax;
 
+$widthMin = 33;
+$widthMax = 87;
+$currentMinWidth = ($minWidth !== '') ? (int)$minWidth : $widthMin;
+$currentMaxWidth = ($maxWidth !== '') ? (int)$maxWidth : $widthMax;
+
 require_once __DIR__ . '/includes/header.php';
 ?>
 <section class="section">
@@ -62,13 +67,31 @@ require_once __DIR__ . '/includes/header.php';
                         </select>
                     </label>
 
-                    <div class="range-grid">
-                        <label>Min. širina košnje (cm)
-                            <input type="number" name="min_width" min="33" value="<?= e((string) $minWidth); ?>">
-                        </label>
-                        <label>Max. širina košnje (cm)
-                            <input type="number" name="max_width" min="33" max="87" value="<?= e((string) $maxWidth); ?>">
-                        </label>
+                    <div class="width-filter-block">
+                        <label class="price-filter-label">Širina košnje (cm)</label>
+                        <div class="range-grid">
+                            <label>
+                                <input type="number" name="min_width" id="min-width-input" min="33" max="87"
+                                       value="<?= e((string) $currentMinWidth); ?>">
+                            </label>
+                            <label>
+                                <input type="number" name="max_width" id="max-width-input" min="33" max="87"
+                                       value="<?= e((string) $currentMaxWidth); ?>">
+                            </label>
+                        </div>
+                        <div class="price-slider-wrap">
+                            <div class="price-slider-track" id="width-track">
+                                <div class="price-slider-range" id="width-range"></div>
+                            </div>
+                            <input class="price-thumb price-thumb--left" type="range" id="width-thumb-min"
+                                   min="33" max="87" step="1" value="<?= e((string) $currentMinWidth); ?>">
+                            <input class="price-thumb price-thumb--right" type="range" id="width-thumb-max"
+                                   min="33" max="87" step="1" value="<?= e((string) $currentMaxWidth); ?>">
+                        </div>
+                        <div class="price-slider-labels">
+                            <span id="width-label-min"><?= e((string) $currentMinWidth); ?> cm</span>
+                            <span id="width-label-max"><?= e((string) $currentMaxWidth); ?> cm</span>
+                        </div>
                     </div>
 
                     <label>Min. kapacitet košare (L)
@@ -167,8 +190,8 @@ require_once __DIR__ . '/includes/header.php';
                     <label for="sort-select" style="font-size: var(--text-sm); font-weight: 600;">Sortiraj po:</label>
                     <select id="sort-select" style="margin-left: 0.5rem; padding: 0.4rem 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font-size: var(--text-sm); cursor: pointer;">
                         <option value="">Zadano</option>
-                        <option value="price_asc">Cijena: od manje prema većoj </option>
-                        <option value="price_desc">Cijena: od veće prema manjoj </option>
+                        <option value="price_asc">Cijena: od manje prema većoj ↑</option>
+                        <option value="price_desc">Cijena: od veće prema manjoj ↓</option>
                     </select>
                 </div>
             </div>
@@ -186,6 +209,7 @@ require_once __DIR__ . '/includes/header.php';
 
 <style>
 .price-filter-block { margin-top: 1rem; }
+.width-filter-block { margin-top: 1rem; }
 .price-filter-label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: var(--text-sm, 0.875rem); }
 
 .price-slider-wrap {
@@ -262,16 +286,15 @@ require_once __DIR__ . '/includes/header.php';
 
 <script>
 (function () {
-    // ── Filter UI logika (kategorije, slider) ──────────────────────────────
-
+    // ── Filter UI logika: kategorije, slider ──────────────────────────────
     const catSelect = document.getElementById('category-select');
     if (!catSelect) return;
 
     const priceDefaults = {
-        'kosilice':    { min: 200, max: 2510 },
-        'trimeri':     { min: 38,  max: 220 },
-        'sjeme-trave': { min: 6,   max: 30 },
-        '':            { min: 0,   max: 9999 }
+        'kosilice':    { min: 200,  max: 2510 },
+        'trimeri':     { min: 38,   max: 220  },
+        'sjeme-trave': { min: 6,    max: 30   },
+        '':            { min: 0,    max: 9999 },
     };
 
     const thumbMin = document.getElementById('thumb-min');
@@ -285,14 +308,14 @@ require_once __DIR__ . '/includes/header.php';
     function updateFilters(cat, resetValues) {
         document.querySelectorAll('.filter-group').forEach(function (group) {
             const groupCat = group.getAttribute('data-category');
-            const visible  = (cat === '' || cat === groupCat);
+            const visible  = !cat || cat === groupCat;
             group.style.display = visible ? '' : 'none';
             group.querySelectorAll('select, input').forEach(function (el) {
                 el.disabled = !visible;
             });
             if (!visible && resetValues) {
                 group.querySelectorAll('select').forEach(function (s) { s.value = ''; });
-                group.querySelectorAll('input[type="number"]').forEach(function (i) { i.value = ''; });
+                group.querySelectorAll('input[type=number]').forEach(function (i) { i.value = ''; });
             }
         });
 
@@ -310,6 +333,11 @@ require_once __DIR__ . '/includes/header.php';
 
     catSelect.addEventListener('change', function () {
         updateFilters(this.value, true);
+        if (this.value !== 'kosilice') {
+            if (wThumbMin) { wThumbMin.value = 33; wInputMin.value = 33; }
+            if (wThumbMax) { wThumbMax.value = 87; wInputMax.value = 87; }
+            updateWidthTrack();
+        }
         loadProducts();
     });
 
@@ -371,9 +399,55 @@ require_once __DIR__ . '/includes/header.php';
         updateTrack();
     });
 
+    // ── Width slider ──────────────────────────────────────────────────────
+    const wThumbMin  = document.getElementById('width-thumb-min');
+    const wThumbMax  = document.getElementById('width-thumb-max');
+    const wInputMin  = document.getElementById('min-width-input');
+    const wInputMax  = document.getElementById('max-width-input');
+    const wRangeEl   = document.getElementById('width-range');
+    const wLabelMin  = document.getElementById('width-label-min');
+    const wLabelMax  = document.getElementById('width-label-max');
+
+    function updateWidthTrack() {
+        if (!wThumbMin) return;
+        var lo   = parseFloat(wThumbMin.value);
+        var hi   = parseFloat(wThumbMax.value);
+        var mn   = parseFloat(wThumbMin.min);
+        var mx   = parseFloat(wThumbMin.max);
+        var span = mx - mn || 1;
+        wRangeEl.style.left  = ((lo - mn) / span * 100) + '%';
+        wRangeEl.style.right = ((mx - hi) / span * 100) + '%';
+        if (wLabelMin) wLabelMin.textContent = lo + ' cm';
+        if (wLabelMax) wLabelMax.textContent = hi + ' cm';
+    }
+
+    if (wThumbMin && wThumbMax) {
+        wThumbMin.addEventListener('input', function () {
+            if (parseFloat(wThumbMin.value) > parseFloat(wThumbMax.value)) wThumbMin.value = wThumbMax.value;
+            wInputMin.value = wThumbMin.value;
+            updateWidthTrack();
+        });
+        wThumbMax.addEventListener('input', function () {
+            if (parseFloat(wThumbMax.value) < parseFloat(wThumbMin.value)) wThumbMax.value = wThumbMin.value;
+            wInputMax.value = wThumbMax.value;
+            updateWidthTrack();
+        });
+        wInputMin.addEventListener('input', function () {
+            wThumbMin.value = this.value;
+            updateWidthTrack();
+        });
+        wInputMax.addEventListener('input', function () {
+            wThumbMax.value = this.value;
+            updateWidthTrack();
+        });
+        wThumbMin.addEventListener('change', loadProducts);
+        wThumbMax.addEventListener('change', loadProducts);
+    }
+
     // Init
     updateFilters(catSelect.value, false);
     updateTrack();
+    updateWidthTrack();
 
     // ── AJAX dohvat i renderiranje proizvoda ───────────────────────────────
 
@@ -454,8 +528,8 @@ require_once __DIR__ . '/includes/header.php';
     }
 
     document.getElementById('sort-select').addEventListener('change', () => {
-    loadProducts();
-});
+        loadProducts();
+    });
 
     // Inicijalni load stranice
     loadProducts();

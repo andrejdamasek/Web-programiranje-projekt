@@ -16,13 +16,8 @@
 <header class="site-header">
     <div class="container header-inner">
         <a href="index.php" class="brand" aria-label="Travnjak Centar početna">
-            <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true">
-                <path d="M8 42c10-2 16-10 18-22 6 10 8 22 4 34-12 0-18-4-22-12Z" fill="currentColor" opacity="0.92"></path>
-                <path d="M30 48c6-1 14-6 20-18 5 7 7 15 6 24-13 2-22 0-26-6Z" fill="currentColor" opacity="0.72"></path>
-            </svg>
-            <span>Travnjak Centar</span>
+            <img src="assets/logo.png" alt="Travnjak Centar" class="brand-logo" height="48" loading="eager">
         </a>
-
         <button class="nav-toggle" aria-label="Otvori navigaciju" data-nav-toggle>☰</button>
 
         <nav class="main-nav" data-nav>

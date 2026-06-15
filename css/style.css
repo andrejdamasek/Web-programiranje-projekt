@@ -86,9 +86,11 @@ img {
 }
 
 .brand-logo {
-  width: 42px;
-  height: 42px;
-  color: var(--primary);
+  width: auto !important;
+  height: 80px !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  object-fit: contain;
 }
 
 .main-nav {
