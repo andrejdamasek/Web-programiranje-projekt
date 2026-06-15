@@ -132,7 +132,7 @@ require_once __DIR__ . '/includes/header.php';
                     </form>
                 <?php else: ?>
                     <p>Za završetak kupnje potrebno se prijaviti.</p>
-                    <a class="button" href="login.php">Idi na prijavu</a>
+                    <a class="button" href="login.php?redirect=cart.php">Idi na prijavu</a>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cart modal closing (moved from inline product.php)
+    // Cart modal closing
     (function () {
         const modal = document.getElementById('cartModal');
         const continueBtn = document.getElementById('continueShoppingBtn');
@@ -29,14 +29,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (continueBtn) {
             continueBtn.addEventListener('click', function () {
                 modal.classList.add('cart-modal-closing');
-                setTimeout(function () { modal.remove(); }, 250);
+                setTimeout(function () {
+                    modal.remove();
+                    // Idi na prethodnu stranicu (odakle je korisnik došao na product.php)
+                    const saved = sessionStorage.getItem('productReferrer');
+                    if (saved) {
+                        window.location.href = saved;
+                    }
+                }, 250);
             });
         }
 
         modal.addEventListener('click', function (e) {
             if (e.target === modal) {
                 modal.classList.add('cart-modal-closing');
-                setTimeout(function () { modal.remove(); }, 250);
+                setTimeout(function () {
+                    modal.remove();
+                    const saved = sessionStorage.getItem('productReferrer');
+                    if (saved) window.location.href = saved;
+                }, 250);
             }
         });
 
@@ -61,16 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     })();
 
-    // Back button: vrati na prethodnu stranicu (s filterima ako je products.php)
+    // Back button + spremi referrer za "Nastavi kupovinu"
     (function () {
         const btn = document.getElementById('back-btn');
         if (!btn) return;
         const ref = document.referrer;
-        if (ref) {
-            btn.href = ref;
-        } else {
-            btn.href = 'products.php';
+
+        // Spremi referrer samo ako nije sam product.php (tj. nije POST reload)
+        if (ref && ref.indexOf('product.php') === -1) {
+            sessionStorage.setItem('productReferrer', ref);
         }
+
+        const saved = sessionStorage.getItem('productReferrer');
+        btn.href = saved || ref || 'products.php';
     })();
 
 });

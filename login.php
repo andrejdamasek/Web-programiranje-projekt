@@ -5,8 +5,9 @@ require_once __DIR__ . '/includes/functions.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    $redirect = $_POST['redirect'] ?? '';
 
     $stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email');
     $stmt->execute(['email' => $email]);
@@ -19,9 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'email'    => $user['email'],
             'is_admin' => (bool) $user['is_admin'],
         ];
-        // Admin ide na admin panel, korisnik na profil
-        redirect($user['is_admin'] ? 'admin.php' : 'profile.php');
-    } else {
+        $allowed = ['cart.php', 'profile.php', 'products.php', 'index.php'];
+        if ($redirect && in_array($redirect, $allowed)) {
+            redirect($redirect);
+        } else {
+            redirect($user['is_admin'] ? 'admin.php' : 'index.php');
+        }
+    }
+     else {
         $error = 'Pogrešan email ili lozinka.';
     }
 }
@@ -38,6 +44,7 @@ require_once __DIR__ . '/includes/header.php';
         <?php endif; ?>
 
         <form method="POST" class="auth-form">
+            <input type="hidden" name="redirect" value="<?= e($_GET['redirect'] ?? ''); ?>">
             <label>Email
                 <input type="email" name="email" required>
             </label>
@@ -48,7 +55,7 @@ require_once __DIR__ . '/includes/header.php';
         </form>
         <p class="auth-register-hint">
             Još niste registrirani?
-            <a href="register.php" class="text-link">Registrirajte se</a>
+            <a href="register.php?redirect=<?= urlencode($_GET['redirect'] ?? ''); ?>" class="text-link">Registrirajte se</a>
         </p>
     </div>
 </section>

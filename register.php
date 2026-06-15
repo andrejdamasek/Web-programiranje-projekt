@@ -5,11 +5,12 @@ require_once __DIR__ . '/includes/functions.php';
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $firstName = trim($_POST['first_name'] ?? '');
-    $lastName = trim($_POST['last_name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $firstName       = trim($_POST['first_name'] ?? '');
+    $lastName        = trim($_POST['last_name'] ?? '');
+    $email           = trim($_POST['email'] ?? '');
+    $password        = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
+    $redirect        = trim($_POST['redirect'] ?? '');
 
     if ($firstName === '' || $lastName === '' || $email === '' || $password === '') {
         $errors[] = 'Sva polja su obavezna.';
@@ -34,13 +35,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, email, password_hash)
                                    VALUES (:first_name, :last_name, :email, :password_hash)');
             $stmt->execute([
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'email' => $email,
+                'first_name'    => $firstName,
+                'last_name'     => $lastName,
+                'email'         => $email,
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
             ]);
 
-            redirect('login.php');
+            $newId = (int) $pdo->lastInsertId();
+            $_SESSION['user'] = [
+                'id'       => $newId,
+                'name'     => $firstName . ' ' . $lastName,
+                'email'    => $email,
+                'is_admin' => false,
+            ];
+            $allowed = ['cart.php', 'profile.php', 'products.php', 'index.php'];
+            redirect(($redirect && in_array($redirect, $allowed)) ? $redirect : 'index.php');
         }
     }
 }
@@ -57,6 +66,7 @@ require_once __DIR__ . '/includes/header.php';
         <?php endforeach; ?>
 
         <form method="POST" class="auth-form" id="register-form">
+            <input type="hidden" name="redirect" value="<?= e($_GET['redirect'] ?? ''); ?>">
             <label>Ime
                 <input type="text" name="first_name" required>
             </label>
@@ -76,7 +86,7 @@ require_once __DIR__ . '/includes/header.php';
         </form>
         <p class="auth-register-hint">
             Već imate račun?
-            <a href="login.php" class="text-link">Povratak na prijavu</a>
+            <a href="login.php?redirect=<?= urlencode($_GET['redirect'] ?? ''); ?>" class="text-link">Povratak na prijavu</a>
         </p>
     </div>
 </section>
