@@ -93,31 +93,6 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 </div>
-<script>
-(function () {
-    const modal = document.getElementById('cartModal');
-    const continueBtn = document.getElementById('continueShoppingBtn');
-
-    continueBtn.addEventListener('click', function () {
-        modal.classList.add('cart-modal-closing');
-        setTimeout(function () { modal.remove(); }, 250);
-    });
-
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) {
-            modal.classList.add('cart-modal-closing');
-            setTimeout(function () { modal.remove(); }, 250);
-        }
-    });
-
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            modal.classList.add('cart-modal-closing');
-            setTimeout(function () { modal.remove(); }, 250);
-        }
-    });
-})();
-</script>
 <?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

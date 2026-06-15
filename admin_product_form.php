@@ -189,17 +189,4 @@ require_once __DIR__ . '/includes/header.php';
         </form>
     </div>
 </section>
-<script>
-(function () {
-    const input = document.getElementById('image-url-input');
-    const wrap  = document.getElementById('img-preview-wrap');
-    const img   = document.getElementById('img-preview');
-    if (!input || !img) return;
-    input.addEventListener('input', function () {
-        const url = this.value.trim();
-        img.src = url;
-        wrap.style.display = url ? '' : 'none';
-    });
-})();
-</script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

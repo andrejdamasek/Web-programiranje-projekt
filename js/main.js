@@ -19,4 +19,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Cart modal closing (moved from inline product.php)
+    (function () {
+        const modal = document.getElementById('cartModal');
+        const continueBtn = document.getElementById('continueShoppingBtn');
+        if (!modal) return;
+
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function () {
+                modal.classList.add('cart-modal-closing');
+                setTimeout(function () { modal.remove(); }, 250);
+            });
+        }
+
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                modal.classList.add('cart-modal-closing');
+                setTimeout(function () { modal.remove(); }, 250);
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                modal.classList.add('cart-modal-closing');
+                setTimeout(function () { modal.remove(); }, 250);
+            }
+        });
+    })();
+
+    // Image preview for admin product form (moved from inline admin_product_form.php)
+    (function () {
+        const input = document.getElementById('image-url-input');
+        const wrap  = document.getElementById('img-preview-wrap');
+        const img   = document.getElementById('img-preview');
+        if (!input || !img) return;
+        input.addEventListener('input', function () {
+            const url = this.value.trim();
+            img.src = url;
+            wrap.style.display = url ? '' : 'none';
+        });
+    })();
 });
