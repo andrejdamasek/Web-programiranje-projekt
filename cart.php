@@ -2,14 +2,57 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
 
+$cartError = '';
+$checkoutError = '';
+
+// Uklanjanje proizvoda iz košarice
 if (isset($_POST['remove'])) {
     $removeId = (int) $_POST['remove'];
-    $_SESSION['cart'] = array_values(array_filter($_SESSION['cart'] ?? [], fn($item) => $item['product_id'] !== $removeId));
+    $_SESSION['cart'] = array_values(
+        array_filter($_SESSION['cart'] ?? [], fn($item) => $item['product_id'] !== $removeId)
+    );
+}
+
+// Promjena količine (+/-) u košarici
+if (isset($_POST['change_qty'])) {
+    $productId = (int) ($_POST['product_id'] ?? 0);
+    $delta     = (int) ($_POST['change_qty'] ?? 0);
+
+    if ($productId && $delta !== 0 && !empty($_SESSION['cart'])) {
+        foreach ($_SESSION['cart'] as $index => &$item) {
+            if ($item['product_id'] === $productId) {
+                $currentQty = (int) $item['quantity'];
+                $newQty     = $currentQty + $delta;
+
+                // Ako padne na 0 ili manje, ukloni stavku
+                if ($newQty <= 0) {
+                    unset($_SESSION['cart'][$index]);
+                    $_SESSION['cart'] = array_values($_SESSION['cart']);
+                } else {
+                    // Provjeri stock iz baze
+                    $available = getStock($pdo, $productId);
+                    if ($available <= 0) {
+                        unset($_SESSION['cart'][$index]);
+                        $_SESSION['cart'] = array_values($_SESSION['cart']);
+                        $cartError = 'Proizvod više nije dostupan na zalihi i uklonjen je iz košarice.';
+                    } else {
+                        if ($newQty > $available) {
+                            $newQty = $available;
+                            $cartError = 'Ne može se dodati više od dostupne količine za odabrani proizvod.';
+                        }
+                        $item['quantity'] = $newQty;
+                    }
+                }
+                unset($item);
+                break;
+            }
+        }
+    }
 }
 
 $cartItems = $_SESSION['cart'] ?? [];
-$products = [];
-$total = 0;
+$products  = [];
+$total     = 0;
 
 if ($cartItems) {
     $ids = array_column($cartItems, 'product_id');
@@ -24,8 +67,8 @@ if ($cartItems) {
                 $lineTotal = $row['price'] * $item['quantity'];
                 $total += $lineTotal;
                 $products[] = [
-                    'product' => $row,
-                    'quantity' => $item['quantity'],
+                    'product'    => $row,
+                    'quantity'   => $item['quantity'],
                     'line_total' => $lineTotal
                 ];
             }
@@ -33,6 +76,7 @@ if ($cartItems) {
     }
 }
 
+// Checkout logika
 if (isset($_POST['checkout']) && isLoggedIn() && $products) {
 
     // Provjeri zalihe za sve stavke prije nego što kreneš s transakcijom
@@ -72,8 +116,8 @@ if (isset($_POST['checkout']) && isLoggedIn() && $products) {
                 ]);
                 // Smanji stock — uvjet stock >= qty sprječava negativne vrijednosti
                 $stockStmt->execute([
-                    'qty' => $item['quantity'],
-                    'id'  => $item['product']['id'],
+                    'qty'       => $item['quantity'],
+                    'id'        => $item['product']['id'],
                     'qty_check' => $item['quantity'],
                 ]);
                 if ($stockStmt->rowCount() === 0) {
@@ -100,6 +144,10 @@ require_once __DIR__ . '/includes/header.php';
     <div class="container narrow-container">
         <h1>Košarica</h1>
 
+        <?php if (!empty($cartError)): ?>
+            <p class="form-error"><?= e($cartError); ?></p>
+        <?php endif; ?>
+
         <?php if (!$products): ?>
             <p>Košarica je trenutno prazna.</p>
         <?php else: ?>
@@ -109,11 +157,20 @@ require_once __DIR__ . '/includes/header.php';
                         <img src="<?= e($item['product']['image_url']); ?>" alt="<?= e($item['product']['name']); ?>">
                         <div>
                             <h2><?= e($item['product']['name']); ?></h2>
-                            <p>Količina: <?= (int) $item['quantity']; ?></p>
                             <p>Ukupno: <?= formatPrice((float) $item['line_total']); ?></p>
                         </div>
-                        <form method="POST">
-                            <button class="button button-secondary" type="submit" name="remove" value="<?= (int) $item['product']['id']; ?>">Ukloni</button>
+                        <form method="POST" class="cart-item-actions">
+                            <input type="hidden" name="product_id" value="<?= (int) $item['product']['id']; ?>">
+
+                            <div class="cart-qty-controls">
+                                <button class="button button-secondary" type="submit" name="change_qty" value="-1">−</button>
+                                <span class="cart-qty-display"><?= (int) $item['quantity']; ?></span>
+                                <button class="button button-secondary" type="submit" name="change_qty" value="1">+</button>
+                            </div>
+
+                            <button class="button button-secondary" type="submit" name="remove" value="<?= (int) $item['product']['id']; ?>">
+                                Ukloni
+                            </button>
                         </form>
                     </article>
                 <?php endforeach; ?>
