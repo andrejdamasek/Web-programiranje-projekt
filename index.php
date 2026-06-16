@@ -1,11 +1,16 @@
 <?php
+// Spajanje na bazu i postavljanje naslova stranice
 require_once __DIR__ . '/config/database.php';
 $pageTitle = 'Početna';
 require_once __DIR__ . '/includes/header.php';
 
+// Dohvaćamo do 6 istaknutih proizvoda (featured = 1) za prikaz na početnoj
+// JOIN s categories tablicom da dobijemo ime i slug kategorije
 $featuredStmt = $pdo->query("SELECT p.*, c.name AS category_name, c.slug AS category_slug FROM products p JOIN categories c ON p.category_id = c.id WHERE featured = 1 ORDER BY p.id DESC LIMIT 6");
 $featuredProducts = $featuredStmt->fetchAll();
 ?>
+
+<!-- Hero sekcija s naslovnim tekstom i karticom kategorija -->
 <section class="hero section">
     <div class="container hero-grid">
         <div>
@@ -17,6 +22,7 @@ $featuredProducts = $featuredStmt->fetchAll();
             </div>
         </div>
 
+        <!-- Kartica s kategorijama i kratkim opisom prednosti -->
         <div class="hero-card">
             <h2>Izdvojene kategorije</h2>
             <div class="category-pills">
@@ -33,6 +39,7 @@ $featuredProducts = $featuredStmt->fetchAll();
     </div>
 </section>
 
+<!-- Sekcija s istaknutim proizvodima – kartice dohvaćene iz baze -->
 <section class="section">
     <div class="container">
         <div class="section-heading">
@@ -51,6 +58,7 @@ $featuredProducts = $featuredStmt->fetchAll();
                     <div class="product-card-body">
                         <span class="badge"><?= e($product['category_name']); ?></span>
                         <h3><a class="product-card-title-link" href="product.php?id=<?= (int) $product['id']; ?>"><?= e($product['name']); ?></a></h3>
+                        <!-- Kratki opis skraćen na 90 znakova s "..." -->
                         <p><?= e(mb_strimwidth($product['short_description'], 0, 90, '...')); ?></p>
                         <div class="product-card-footer">
                             <strong><?= formatPrice((float) $product['price']); ?></strong>
@@ -62,4 +70,5 @@ $featuredProducts = $featuredStmt->fetchAll();
         </div>
     </div>
 </section>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

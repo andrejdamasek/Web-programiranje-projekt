@@ -2,15 +2,18 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
 
+// Samo prijavljeni korisnici mogu vidjeti profil
 if (!isLoggedIn()) {
     redirect('login.php');
 }
 
+// Dohvaćamo sve narudžbe prijavljenog korisnika, od najnovije prema najstarijoj
 $stmt = $pdo->prepare('SELECT * FROM orders WHERE user_id = :user_id ORDER BY created_at DESC');
 $stmt->execute(['user_id' => currentUserId()]);
 $orders = $stmt->fetchAll();
 
-// Dohvati stavke za sve narudžbe odjednom
+// ── Optimizacija: dohvat stavki za sve narudžbe u jednom upitu ──────────
+// Koristimo IN operator da izbjegnemo N+1 problem (po jedan upit za svaku narudžbu)
 $orderItems = [];
 if ($orders) {
     $orderIds = array_column($orders, 'id');
@@ -22,6 +25,8 @@ if ($orders) {
          WHERE oi.order_id IN ($placeholders)"
     );
     $itemStmt->execute($orderIds);
+
+    // Grupiramo stavke po order_id za prikaz unutar foreach petlje narudžbi
     foreach ($itemStmt->fetchAll() as $item) {
         $orderItems[$item['order_id']][] = $item;
     }
@@ -33,6 +38,7 @@ require_once __DIR__ . '/includes/header.php';
 <section class="section">
     <div class="container narrow-container">
         <h1>Moj profil</h1>
+        <!-- Podaci o korisniku dohvaćeni iz sesije -->
         <p>Pozdrav, <?= e($_SESSION['user']['name']); ?> (<?= e($_SESSION['user']['email']); ?>).</p>
 
         <h2>Moje narudžbe</h2>
@@ -49,6 +55,7 @@ require_once __DIR__ . '/includes/header.php';
                             <span class="order-total"><?= formatPrice((float) $order['total_price']); ?></span>
                         </div>
 
+                        <!-- Stavke narudžbe – grupirane po order_id u prethodnom upitu -->
                         <?php if (!empty($orderItems[$order['id']])): ?>
                             <ul class="order-items-list">
                                 <?php foreach ($orderItems[$order['id']] as $item): ?>
@@ -56,6 +63,7 @@ require_once __DIR__ . '/includes/header.php';
                                         <img src="<?= e($item['image_url']); ?>" alt="<?= e($item['name']); ?>" width="52" height="52" loading="lazy">
                                         <div class="order-item-info">
                                             <span class="order-item-name"><?= e($item['name']); ?></span>
+                                            <!-- price_at_purchase čuva cijenu u trenutku kupnje -->
                                             <span class="order-item-meta">
                                                 <?= (int) $item['quantity']; ?> kom &times; <?= formatPrice((float) $item['price_at_purchase']); ?>
                                             </span>

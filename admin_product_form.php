@@ -2,31 +2,38 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
 
+// Samo admini mogu pristupiti formi za upravljanje proizvodima
 if (!isAdmin()) {
     redirect('login.php');
 }
 
+// Ako postoji ?id=X u URL-u, radi se o uređivanju; inače dodajemo novi proizvod
 $id = (int) ($_GET['id'] ?? 0);
 $product = null;
 $errors = [];
 
+// Dohvaćamo sve kategorije za <select> dropdown u formi
 $categories = $pdo->query('SELECT * FROM categories ORDER BY name')->fetchAll();
 
+// Edit mode: dohvat podataka o proizvodu koji uređujemo
 if ($id > 0) {
     $stmt = $pdo->prepare('SELECT * FROM products WHERE id = :id');
     $stmt->execute(['id' => $id]);
     $product = $stmt->fetch();
-    if (!$product) redirect('admin.php');
+    if (!$product) redirect('admin.php'); // Proizvod ne postoji – vraćamo na admin panel
 }
 
+// ── Obrada POST zahtjeva ─────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Dohvaćamo i sanitiziramo sve vrijednosti iz forme
+    // Opcionalna polja postaju null ako su prazna
     $fields = [
         'category_id'       => (int) ($_POST['category_id'] ?? 0),
         'name'              => trim($_POST['name'] ?? ''),
         'brand'             => trim($_POST['brand'] ?? ''),
         'short_description' => trim($_POST['short_description'] ?? ''),
         'description'       => trim($_POST['description'] ?? ''),
-        'price'             => (float) str_replace(',', '.', $_POST['price'] ?? '0'),
+        'price'             => (float) str_replace(',', '.', $_POST['price'] ?? '0'), // podrška za zarez kao decimalni znak
         'stock'             => (int) ($_POST['stock'] ?? 0),
         'power_type'        => trim($_POST['power_type'] ?? '') ?: null,
         'blade_type'        => trim($_POST['blade_type'] ?? '') ?: null,
@@ -37,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'featured'          => isset($_POST['featured']) ? 1 : 0,
     ];
 
+    // Server-side validacija obaveznih polja
     if (!$fields['category_id'])            $errors[] = 'Kategorija je obavezna.';
     if ($fields['name'] === '')             $errors[] = 'Naziv je obavezan.';
     if ($fields['brand'] === '')            $errors[] = 'Brand je obavezan.';
@@ -48,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         if ($id > 0) {
+            // Uređivanje: UPDATE postojećeg zapisa
             $fields['id'] = $id;
             $pdo->prepare('UPDATE products SET
                 category_id=:category_id, name=:name, brand=:brand,
@@ -58,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 image_url=:image_url, featured=:featured
                 WHERE id=:id')->execute($fields);
         } else {
+            // Dodavanje: INSERT novog zapisa
             $pdo->prepare('INSERT INTO products
                 (category_id,name,brand,short_description,description,price,stock,
                  power_type,blade_type,cutting_width_cm,basket_capacity_l,weight_kg,image_url,featured)
@@ -69,12 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('admin.php');
     }
 
+    // Ako ima grešaka, čuvamo unesene podatke za ponovni prikaz forme
     $product = $fields;
     $product['id'] = $id;
 }
 
 $isEdit = $id > 0;
 $pageTitle = $isEdit ? 'Uredi proizvod' : 'Dodaj proizvod';
+
+// Helper lambda za čitanje vrijednosti polja – vraća $product[$key] ili $default
+// Koristi se u HTML-u za popunjavanje forme s postojećim/unesenim podacima
 $v = fn(string $key, mixed $default = '') => $product[$key] ?? $default;
 
 require_once __DIR__ . '/includes/header.php';
@@ -89,12 +103,14 @@ require_once __DIR__ . '/includes/header.php';
             <a href="admin.php" class="button button-secondary">← Natrag</a>
         </div>
 
+        <!-- Prikaz grešaka validacije -->
         <?php foreach ($errors as $err): ?>
             <p class="form-error"><?= e($err); ?></p>
         <?php endforeach; ?>
 
         <form method="POST" class="admin-form">
 
+            <!-- Sekcija: osnovna polja -->
             <div class="form-section">
                 <h2 class="form-section-title">Osnovno</h2>
                 <label>Kategorija *
@@ -123,6 +139,7 @@ require_once __DIR__ . '/includes/header.php';
                 </label>
             </div>
 
+            <!-- Sekcija: cijena i zaliha -->
             <div class="form-section">
                 <h2 class="form-section-title">Cijena i zaliha</h2>
                 <div class="range-grid">
@@ -137,6 +154,7 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
             </div>
 
+            <!-- Sekcija: tehnički podaci (opcionalna polja) -->
             <div class="form-section">
                 <h2 class="form-section-title">Tehnički podaci <span class="form-optional">(opcionalno)</span></h2>
                 <div class="range-grid">
@@ -163,12 +181,15 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
             </div>
 
+            <!-- Sekcija: slika i istaknuto -->
             <div class="form-section">
                 <h2 class="form-section-title">Slika i prikaz</h2>
+                <!-- id="image-url-input" – main.js sluša input event i prikazuje live preview -->
                 <label>URL slike *
                     <input type="url" name="image_url" id="image-url-input"
                            value="<?= e((string)$v('image_url', '')); ?>" required>
                 </label>
+                <!-- id="img-preview-wrap" i id="img-preview" – koristi main.js za live preview -->
                 <div class="admin-img-preview" id="img-preview-wrap"
                      style="<?= $v('image_url') ? '' : 'display:none'; ?>">
                     <img src="<?= e((string)$v('image_url', '')); ?>" alt="Pregled slike" id="img-preview">

@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/functions.php';
 
 $errors = [];
 
+// Obrada POST zahtjeva – pokušaj registracije
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $firstName       = trim($_POST['first_name'] ?? '');
     $lastName        = trim($_POST['last_name'] ?? '');
@@ -12,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirmPassword = $_POST['confirm_password'] ?? '';
     $redirect        = trim($_POST['redirect'] ?? '');
 
+    // Server-side validacija – skupljamo sve greške odjednom
     if ($firstName === '' || $lastName === '' || $email === '' || $password === '') {
         $errors[] = 'Sva polja su obavezna.';
     }
@@ -26,12 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$errors) {
+        // Provjera postoji li korisnik s tim emailom (unikatan email)
         $check = $pdo->prepare('SELECT id FROM users WHERE email = :email');
         $check->execute(['email' => $email]);
 
         if ($check->fetch()) {
             $errors[] = 'Korisnik s ovom email adresom već postoji.';
         } else {
+            // Lozinka se sprema kao bcrypt hash – nikad plain text
             $stmt = $pdo->prepare('INSERT INTO users (first_name, last_name, email, password_hash)
                                    VALUES (:first_name, :last_name, :email, :password_hash)');
             $stmt->execute([
@@ -41,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
             ]);
 
+            // Nakon registracije korisnik je automatski prijavljen (postavljamo sesiju)
             $newId = (int) $pdo->lastInsertId();
             $_SESSION['user'] = [
                 'id'       => $newId,
@@ -61,10 +66,12 @@ require_once __DIR__ . '/includes/header.php';
     <div class="container narrow-container auth-card">
         <h1>Registracija korisnika</h1>
 
+        <!-- Prikaz svih grešaka validacije -->
         <?php foreach ($errors as $error): ?>
             <p class="form-error"><?= e($error); ?></p>
         <?php endforeach; ?>
 
+        <!-- id="register-form" koristi main.js za client-side provjeru podudaranja lozinki -->
         <form method="POST" class="auth-form" id="register-form">
             <input type="hidden" name="redirect" value="<?= e($_GET['redirect'] ?? ''); ?>">
             <label>Ime

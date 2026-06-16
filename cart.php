@@ -8,6 +8,7 @@ $checkoutError = '';
 // Uklanjanje proizvoda iz košarice
 if (isset($_POST['remove'])) {
     $removeId = (int) $_POST['remove'];
+    // Filtriramo sesijsku košaricu – uklanjamo stavku s ovim product_id
     $_SESSION['cart'] = array_values(
         array_filter($_SESSION['cart'] ?? [], fn($item) => $item['product_id'] !== $removeId)
     );
@@ -29,9 +30,10 @@ if (isset($_POST['change_qty'])) {
                     unset($_SESSION['cart'][$index]);
                     $_SESSION['cart'] = array_values($_SESSION['cart']);
                 } else {
-                    // Provjeri stock iz baze
+                    // Provjera dostupne zalihe iz baze (sprječava prebukiranje)
                     $available = getStock($pdo, $productId);
                     if ($available <= 0) {
+                        // Nema više na zalihi – uklanjamo i informiramo korisnika
                         unset($_SESSION['cart'][$index]);
                         $_SESSION['cart'] = array_values($_SESSION['cart']);
                         $cartError = 'Proizvod više nije dostupan na zalihi i uklonjen je iz košarice.';
@@ -49,18 +51,20 @@ if (isset($_POST['change_qty'])) {
         }
     }
 }
-
+// ── Priprema podataka za prikaz ─────────────────────────────────────────
 $cartItems = $_SESSION['cart'] ?? [];
 $products  = [];
 $total     = 0;
 
 if ($cartItems) {
+    // Dohvaćamo sve proizvode u jednom upitu (IN operator – izbjegavamo N+1)
     $ids = array_column($cartItems, 'product_id');
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     $stmt = $pdo->prepare("SELECT * FROM products WHERE id IN ($placeholders)");
     $stmt->execute($ids);
     $productRows = $stmt->fetchAll();
 
+    // Spajamo podatke iz baze s količinama iz sesije i računamo ukupan iznos
     foreach ($productRows as $row) {
         foreach ($cartItems as $item) {
             if ($item['product_id'] == $row['id']) {
@@ -79,7 +83,7 @@ if ($cartItems) {
 // Checkout logika
 if (isset($_POST['checkout']) && isLoggedIn() && $products) {
 
-    // Provjeri zalihe za sve stavke prije nego što kreneš s transakcijom
+    // Korak 1: Provjera zaliha za sve stavke PRIJE transakcije
     $stockErrors = [];
     foreach ($products as $item) {
         $availableStock = (int) $item['product']['stock'];
@@ -92,8 +96,10 @@ if (isset($_POST['checkout']) && isLoggedIn() && $products) {
     if ($stockErrors) {
         $checkoutError = 'Narudžba nije moguća zbog nedovoljnih zaliha:<br>' . implode('<br>', $stockErrors);
     } else {
+        // Korak 2: Atomarna transakcija – sve ili ništa
         $pdo->beginTransaction();
         try {
+            // Kreiranje zapisa narudžbe u tablici orders
             $orderStmt = $pdo->prepare('INSERT INTO orders (user_id, total_price, status)
                                         VALUES (:user_id, :total_price, :status)');
             $orderStmt->execute([
@@ -105,9 +111,11 @@ if (isset($_POST['checkout']) && isLoggedIn() && $products) {
 
             $itemStmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase)
                                        VALUES (:order_id, :product_id, :quantity, :price_at_purchase)');
+            // AND stock >= qty sprječava negativnu zalihu (atomarna provjera)                           
             $stockStmt = $pdo->prepare('UPDATE products SET stock = stock - :qty WHERE id = :id AND stock >= :qty_check');
 
             foreach ($products as $item) {
+                // price_at_purchase čuva cijenu u trenutku kupnje (audit trail)
                 $itemStmt->execute([
                     'order_id'          => $orderId,
                     'product_id'        => $item['product']['id'],
@@ -127,10 +135,12 @@ if (isset($_POST['checkout']) && isLoggedIn() && $products) {
             }
 
             $pdo->commit();
+            // Nakon uspješne narudžbe praznimo košaricu
             $_SESSION['cart'] = [];
             redirect('profile.php');
 
         } catch (\RuntimeException $e) {
+            // Poništavamo sve promjene u bazi ako dođe do greške
             $pdo->rollBack();
             $checkoutError = $e->getMessage();
         }
@@ -162,12 +172,14 @@ require_once __DIR__ . '/includes/header.php';
                         <form method="POST" class="cart-item-actions">
                             <input type="hidden" name="product_id" value="<?= (int) $item['product']['id']; ?>">
 
+                            <!-- Gumbi za promjenu količine – šalju change_qty (+1/-1) i product_id -->
                             <div class="cart-qty-controls">
                                 <button class="button button-secondary" type="submit" name="change_qty" value="-1">−</button>
                                 <span class="cart-qty-display"><?= (int) $item['quantity']; ?></span>
                                 <button class="button button-secondary" type="submit" name="change_qty" value="1">+</button>
                             </div>
 
+                            <!-- Gumb za uklanjanje – šalje remove s ID-om tog proizvoda -->
                             <button class="button button-secondary" type="submit" name="remove" value="<?= (int) $item['product']['id']; ?>">
                                 Ukloni
                             </button>
@@ -189,6 +201,7 @@ require_once __DIR__ . '/includes/header.php';
                     </form>
                 <?php else: ?>
                     <p>Za završetak kupnje potrebno se prijaviti.</p>
+                    <!-- Neprijavljeni korisnik preusmjerava na login s redirect parametrom -->
                     <a class="button" href="login.php?redirect=cart.php">Idi na prijavu</a>
                 <?php endif; ?>
             </div>
