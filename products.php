@@ -21,11 +21,10 @@ require_once __DIR__ . '/config/database.php';
 $rangeData = [];
 
 // Cijene po kategoriji (+ buffer)
-$rangeStmt = $pdo->query("
-    SELECT c.slug, MIN(p.price) AS min_price, MAX(p.price) AS max_price
-    FROM products p JOIN categories c ON p.category_id = c.id
-    GROUP BY c.slug
-");
+$rangeStmt = $pdo->query("SELECT c.slug, MIN(p.price) AS min_price, MAX(p.price) AS max_price
+                          FROM products p JOIN categories c ON p.category_id = c.id
+                          GROUP BY c.slug");
+
 foreach ($rangeStmt->fetchAll() as $row) {
     $min = (float) $row['min_price'];
     $max = (float) $row['max_price'];
@@ -41,11 +40,9 @@ foreach ($rangeStmt->fetchAll() as $row) {
 }
 
 // Širina košnje za kosilice (+ buffer)
-$widthStmt = $pdo->query("
-    SELECT MIN(p.cutting_width_cm) AS min_w, MAX(p.cutting_width_cm) AS max_w
-    FROM products p JOIN categories c ON p.category_id = c.id
-    WHERE c.slug = 'kosilice' AND p.cutting_width_cm IS NOT NULL
-");
+$widthStmt = $pdo->query("SELECT MIN(p.cutting_width_cm) AS min_w, MAX(p.cutting_width_cm) AS max_w
+                          FROM products p JOIN categories c ON p.category_id = c.id
+                          WHERE c.slug = 'kosilice' AND p.cutting_width_cm IS NOT NULL");
 $widthRow = $widthStmt->fetch();
 
 // originalne vrijednosti iz baze kao float
@@ -56,12 +53,15 @@ $widthMaxDb = isset($widthRow['max_w']) ? (float) $widthRow['max_w'] : 87.0;
 $widthMin = (int) floor($widthMinDb);  // npr. 33.0 -> 33
 $widthMax = (int) ceil($widthMaxDb);   // npr. 86.4 -> 87
 
+// Ako nije odabrana kategorija, postavljamo cijenu na najširi raspon 
 $priceMin = $rangeData['price'][$category]['min'] ?? 0;
 $priceMax = $rangeData['price'][$category]['max'] ?? 9999;
 
+//Ako je korisnik unio vrijednosti u formu, koristimo njih, inače default iz baze
 $currentMinPrice = ($minPrice !== '') ? (float)$minPrice : $priceMin;
 $currentMaxPrice = ($maxPrice !== '') ? (float)$maxPrice : $priceMax;
 
+// Ako korisnik nije odabrao širinu košnje, onda koristimo vrijednosti iz baze 
 $currentMinWidth = ($minWidth !== '') ? (int)$minWidth : $widthMin;
 $currentMaxWidth = ($maxWidth !== '') ? (int)$maxWidth : $widthMax;
 
@@ -71,6 +71,8 @@ require_once __DIR__ . '/includes/header.php';
 ?>
 <section class="section">
     <div class="container catalog-layout">
+
+        <?php /* ===== Sidebar (filteri) ===== */ ?>
         <aside class="filters-card">
             <h1>Katalog proizvoda</h1>
 
@@ -216,7 +218,9 @@ require_once __DIR__ . '/includes/header.php';
                 <button type="submit" class="button" style="width:100%; margin-top: 0.5rem;">Primijeni filtere</button>
             </form>
         </aside>
+        
 
+        <?php /* ===== Glavni dio (prikaz proizvoda) ===== */ ?>
         <div class="catalog-main">
             <div class="section-heading">
                 <div>
@@ -224,11 +228,11 @@ require_once __DIR__ . '/includes/header.php';
                     <h2 id="results-count">Učitavanje...</h2>
                 </div>
                 <div>
-                    <label for="sort-select" style="font-size: var(--text-sm); font-weight: 600;">Sortiraj po:</label>
-                    <select id="sort-select" style="padding: 0.4rem 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); background-color: #ffffff; color: var(--color-text); font-size: var(--text-sm); cursor: pointer;">
+                    <label for="sort-select" style="font-size: var(--text-sm); font-weight: 600; padding-left: 0.5rem;">Sortiraj po:</label>
+                    <select id="sort-select" style="font-size: var(--text-sm);">
                         <option value="">Zadano</option>
-                        <option value="price_asc">Cijena: od manje prema većoj ↑</option>
-                        <option value="price_desc">Cijena: od veće prema manjoj ↓</option>
+                        <option value="price_asc">Cijena: od manje prema većoj</option>
+                        <option value="price_desc">Cijena: od veće prema manjoj</option>
                     </select>
                 </div>
             </div>

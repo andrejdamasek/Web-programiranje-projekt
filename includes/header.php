@@ -32,7 +32,7 @@ require_once __DIR__ . '/functions.php';
 <header class="site-header">
     <div class="container header-inner">
         <!-- Logo / brand link na početnu stranicu -->
-        <a href="index.php" class="brand" aria-label="Travnjak Centar početna">
+        <a href="index.php" aria-label="Travnjak Centar početna">
             <img src="assets/logo.png" alt="Travnjak Centar" class="brand-logo" height="48" loading="eager">
         </a>
 

@@ -85,13 +85,6 @@ img {
   min-height: 78px;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-  font-weight: 800;
-}
-
 .brand-logo {
   width: auto !important;
   height: 80px !important;

@@ -159,11 +159,11 @@ require_once __DIR__ . '/includes/header.php';
                 <h2 class="form-section-title">Tehnički podaci <span class="form-optional">(opcionalno)</span></h2>
                 <div class="range-grid">
                     <label>Vrsta pogona
-                        <input type="text" name="power_type" placeholder="npr. akumulatorski"
+                        <input type="text" name="power_type" placeholder="akumulatorski ili benzinski"
                                value="<?= e((string)$v('power_type', '')); ?>">
                     </label>
                     <label>Vrsta oštrice
-                        <input type="text" name="blade_type" placeholder="npr. rotary"
+                        <input type="text" name="blade_type" placeholder="rotary ili reel"
                                value="<?= e((string)$v('blade_type', '')); ?>">
                     </label>
                     <label>Radna širina (cm)
