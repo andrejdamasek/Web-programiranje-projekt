@@ -19,17 +19,28 @@ $powerType      = $_GET['power_type']      ?? '';
 require_once __DIR__ . '/config/database.php';
 
 $rangeData = [];
+
+// Cijene po kategoriji (+ buffer)
 $rangeStmt = $pdo->query("
     SELECT c.slug, MIN(p.price) AS min_price, MAX(p.price) AS max_price
     FROM products p JOIN categories c ON p.category_id = c.id
     GROUP BY c.slug
 ");
 foreach ($rangeStmt->fetchAll() as $row) {
+    $min = (float) $row['min_price'];
+    $max = (float) $row['max_price'];
+
+    // Malo “sigurnosno” proširimo raspon da rubni proizvodi sigurno uđu
+    $minBuffered = floor($min);   // npr. 209.90 -> 209
+    $maxBuffered = ceil($max);    // npr. 2504.07 -> 2505
+
     $rangeData['price'][$row['slug']] = [
-        'min' => (float) $row['min_price'],
-        'max' => (float) $row['max_price'],
+        'min' => $minBuffered,
+        'max' => $maxBuffered,
     ];
 }
+
+// Širina košnje za kosilice (+ buffer)
 $widthStmt = $pdo->query("
     SELECT MIN(p.cutting_width_cm) AS min_w, MAX(p.cutting_width_cm) AS max_w
     FROM products p JOIN categories c ON p.category_id = c.id
@@ -37,13 +48,20 @@ $widthStmt = $pdo->query("
 ");
 $widthRow = $widthStmt->fetch();
 
+// originalne vrijednosti iz baze kao float
+$widthMinDb = isset($widthRow['min_w']) ? (float) $widthRow['min_w'] : 33.0;
+$widthMaxDb = isset($widthRow['max_w']) ? (float) $widthRow['max_w'] : 87.0;
+
+// prošireni integer raspon za slider i filter
+$widthMin = (int) floor($widthMinDb);  // npr. 33.0 -> 33
+$widthMax = (int) ceil($widthMaxDb);   // npr. 86.4 -> 87
+
 $priceMin = $rangeData['price'][$category]['min'] ?? 0;
 $priceMax = $rangeData['price'][$category]['max'] ?? 9999;
+
 $currentMinPrice = ($minPrice !== '') ? (float)$minPrice : $priceMin;
 $currentMaxPrice = ($maxPrice !== '') ? (float)$maxPrice : $priceMax;
 
-$widthMin = (int) ($widthRow['min_w'] ?? 33);
-$widthMax = (int) ($widthRow['max_w'] ?? 87);
 $currentMinWidth = ($minWidth !== '') ? (int)$minWidth : $widthMin;
 $currentMaxWidth = ($maxWidth !== '') ? (int)$maxWidth : $widthMax;
 

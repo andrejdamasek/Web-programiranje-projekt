@@ -45,13 +45,15 @@ if ($bladeType !== '') {
     $params['blade_type'] = $bladeType;
 }
 // Raspon širine košnje (samo za kosilice)
-if ($minWidth !== '') {
-    $sql .= ' AND p.cutting_width_cm >= :min_width';
-    $params['min_width'] = (int) $minWidth;
-}
-if ($maxWidth !== '') {
-    $sql .= ' AND p.cutting_width_cm <= :max_width';
-    $params['max_width'] = (int) $maxWidth;
+if ($category === 'kosilice') {
+    if ($minWidth !== '') {
+        $sql .= ' AND p.cutting_width_cm >= :min_width';
+        $params['min_width'] = (int) $minWidth;
+    }
+    if ($maxWidth !== '') {
+        $sql .= ' AND p.cutting_width_cm <= :max_width';
+        $params['max_width'] = (int) $maxWidth;
+    }
 }
 // Minimalni kapacitet košare (samo za kosilice, u litrama)
 if ($basketCapacity !== '') {
